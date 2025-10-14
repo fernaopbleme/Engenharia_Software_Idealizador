@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <title>TeamBuilder — Criar Projeto (MVP)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #fafafa;
+      --card: #fff;
+      --text: #111;
+      --muted: #666;
+      --border: #e6e6e6;
+      --primary: #4f46e5;
+      --primary-contrast: #fff;
+      --danger: #ef4444;
+      --pill: #f4f4f5;
+      --pill-border: #e4e4e7;
+      --hint-bg: #fff1f2;
+      --hint-text: #9f1239;
+      --success-bg: #ecfdf5;
+      --success-text: #065f46;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--text); background: radial-gradient(1200px 800px at 50% -100px, #ffe6ff66, transparent), var(--bg); }
+
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--card); border-bottom: 1px solid var(--border); }
+    .brand { font-weight: 700; }
+
+    .container { max-width: 920px; margin: 28px auto; padding: 0 16px; }
+
+    .page-title { text-align: center; margin-bottom: 18px; }
+    .page-title h1 { margin: 8px 0 4px; font-size: 24px; }
+    .page-title p { margin: 0; color: var(--muted); }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+
+    .field { margin-bottom: 16px; }
+    .label { display: block; font-weight: 600; margin-bottom: 8px; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    .input, .textarea, .select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); font-size: 14px; }
+    .textarea { min-height: 150px; resize: vertical; }
+
+    .row { display: grid; gap: 10px; grid-template-columns: 1fr; }
+    @media (min-width: 760px) { .row.two { grid-template-columns: 1fr 220px; } }
+
+    .skill-actions { display: flex; gap: 8px; align-items: center; }
+    .btn { padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); cursor: pointer; }
+    .btn:hover { background: #f7f7f7; }
+    .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
+    .btn-primary:hover { filter: brightness(0.95); }
+    .btn-danger { border-color: #fecaca; color: var(--danger); background: #fff; }
+
+    .skills-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .skill-item { display: flex; gap: 10px; align-items: center; justify-content: space-between; border: 1px dashed var(--pill-border); background: var(--pill); padding: 10px 12px; border-radius: 12px; }
+    .skill-item .meta { display: flex; gap: 10px; align-items: center; }
+    .chip { padding: 4px 8px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-size: 12px; border: 1px solid #e0e7ff; }
+
+    .empty { display: grid; place-items: center; text-align: center; border-radius: 12px; border: 1px dashed var(--border); background: #fff7ed; color: #7c2d12; padding: 18px; font-size: 14px; }
+
+    .footer-actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; }
+
+    .alert { margin-top: 12px; padding: 10px 12px; border-radius: 12px; font-size: 14px; border: 1px solid transparent; display: none; }
+    .alert.error { display: block; background: #fff1f2; color: var(--hint-text); border-color: #ffe4e6; }
+    .alert.success { display: block; background: var(--success-bg); color: var(--success-text); border-color: #a7f3d0; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">TeamBuilder</div>
+  </header>
+
+  <main class="container">
+    <div class="page-title">
+      <div style="width:56px;height:56px;margin:0 auto;background:linear-gradient(135deg,#a78bfa,#f472b6);border-radius:999px;display:grid;place-items:center;color:#fff;">💡</div>
+      <h1>Criar Novo Projeto</h1>
+      <p>Compartilhe sua ideia e encontre os membros perfeitos para a equipe</p>
+    </div>
+
+    <section class="card">
+      <form id="projectForm" novalidate>
+        <!-- Título -->
+        <div class="field">
+          <label class="label" for="title">Título do Projeto</label>
+          <input class="input" id="title" name="title" type="text" placeholder="Digite o nome do seu projeto..." required />
+        </div>
+
+        <!-- Descrição -->
+        <div class="field">
+          <label class="label" for="description">Descrição do Projeto</label>
+          <textarea class="textarea" id="description" name="description" placeholder="Descreva sua ideia, objetivos e o que espera alcançar..." required></textarea>
+          <div class="hint">Seja específico sobre o que está construindo e por que é importante</div>
+        </div>
+
+        <!-- Habilidades necessárias -->
+        <div class="field">
+          <label class="label">Habilidades Necessárias</label>
+          <div class="row two">
+            <input class="input" id="skillName" type="text" placeholder="ex: React, Python, Design UI..." />
+            <select class="select" id="skillLevel">
+              <option value="BEGINNER">Iniciante</option>
+              <option value="INTERMEDIATE" selected>Intermediário</option>
+              <option value="ADVANCED">Avançado</option>
+            </select>
+          </div>
+          <div class="skill-actions" style="margin-top:8px">
+            <button type="button" id="addSkillBtn" class="btn btn-primary">+ Adicionar</button>
+          </div>
+
+          <div id="skillsList" class="skills-list"></div>
+          <div id="skillsEmpty" class="empty">Nenhuma habilidade adicionada ainda. Comece adicionando as habilidades que seu projeto precisa!</div>
+        </div>
+
+        <!-- Alertas -->
+        <div id="formAlert" class="alert"></div>
+
+        <!-- Ações -->
+        <div class="footer-actions">
+          <button type="submit" class="btn btn-primary" id="createBtn">Criar Projeto</button>
+          <button type="button" class="btn" id="cancelBtn">Cancelar</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    // ======= Estado local das habilidades =======
+    const skills = []; // { name: string, level: 'BEGINNER'|'INTERMEDIATE'|'ADVANCED' }
+
+    // ======= Referências DOM =======
+    const skillsList = document.getElementById('skillsList');
+    const skillsEmpty = document.getElementById('skillsEmpty');
+    const addSkillBtn = document.getElementById('addSkillBtn');
+    const skillName = document.getElementById('skillName');
+    const skillLevel = document.getElementById('skillLevel');
+    const form = document.getElementById('projectForm');
+    const alertBox = document.getElementById('formAlert');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    function showAlert(type, msg) {
+      alertBox.className = 'alert ' + type; // 'error' | 'success'
+      alertBox.textContent = msg;
+    }
+
+    function clearAlert() { alertBox.className = 'alert'; alertBox.textContent = ''; }
+
+    function renderSkills() {
+      skillsList.innerHTML = '';
+      if (skills.length === 0) {
+        skillsEmpty.style.display = 'grid';
+        return;
+      }
+      skillsEmpty.style.display = 'none';
+      skills.forEach((s, idx) => {
+        const row = document.createElement('div');
+        row.className = 'skill-item';
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const name = document.createElement('strong');
+        name.textContent = s.name;
+        const level = document.createElement('span');
+        level.className = 'chip';
+        level.textContent = s.level === 'BEGINNER' ? 'Iniciante' : s.level === 'ADVANCED' ? 'Avançado' : 'Intermediário';
+        meta.appendChild(name);
+        meta.appendChild(level);
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn btn-danger';
+        remove.textContent = 'Remover';
+        remove.addEventListener('click', () => { skills.splice(idx, 1); renderSkills(); });
+        row.appendChild(meta);
+        row.appendChild(remove);
+        skillsList.appendChild(row);
+      });
+    }
+
+    addSkillBtn.addEventListener('click', () => {
+      clearAlert();
+      const name = (skillName.value || '').trim();
+      if (!name) { return showAlert('error', 'Informe o nome da habilidade antes de adicionar.'); }
+      if (skills.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+        return showAlert('error', 'Essa habilidade já foi adicionada.');
+      }
+      skills.push({ name, level: skillLevel.value });
+      skillName.value = '';
+      renderSkills();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      // Volta para a home (ajuste a rota se necessário)
+      if (document.referrer) { history.back(); } else { window.location.href = '/'; }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAlert();
+
+      const title = document.getElementById('title').value.trim();
+      const description = document.getElementById('description').value.trim();
+
+      if (!title) return showAlert('error', 'O título do projeto é obrigatório.');
+      if (!description) return showAlert('error', 'A descrição do projeto é obrigatória.');
+
+      // Monta o payload conforme um contrato simples
+      const payload = {
+        title,
+        description,
+        requiredSkills: skills.map(s => ({ name: s.name, level: s.level }))
+      };
+
+      try {
+        const res = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || ('HTTP ' + res.status));
+        }
+        const data = await res.json().catch(() => ({}));
+        showAlert('success', 'Projeto criado com sucesso!');
+        // Se o back retornar o ID do projeto, redireciona para a página dele
+        if (data && data.id) {
+          setTimeout(() => { window.location.href = '/projetos/' + encodeURIComponent(data.id); }, 600);
+        }
+      } catch (err) {
+        showAlert('error', 'Falha ao criar o projeto. ' + (err.message || ''));
+      }
+    });
+
+    // Render inicial
+    renderSkills();
+  </script>
+</body>
+</html>
