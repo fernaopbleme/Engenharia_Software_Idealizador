@@ -14,45 +14,84 @@
         body {
             color: #222;
             text-align: center;
-            background: #fff; 
             min-height: 100vh;
             font-family: 'Inter', sans-serif;
+            background: linear-gradient(120deg, #a78bfa 0%, #f9fafb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-left: 16px;
+            padding-right: 16px;
+            box-sizing: border-box;
         }
         .cadastro {
-            background: #f9fafb;
-            max-width: 400px;
-            margin: 20px auto;
-            padding: 32px 24px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: #fff;
+            max-width: 520px;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 44px 32px 32px 32px;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(109,40,217,0.10);
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
+            position: relative;
+            animation: fadein 0.7s;
+            box-sizing: border-box;
+        }
+        @keyframes fadein {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         h1 {
-            color: #6d28d9; /* roxo */
-            font-size: 2rem;
-            margin-bottom: 8px;
+            color: #6d28d9;
+            font-size: 2.2rem;
+            margin-bottom: 4px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .cadastro label {
+            text-align: left;
+            font-size: 15px;
+            color: #7c3aed;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .cadastro input[type="text"], .cadastro input[type="password"], .cadastro input[type="email"] {
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1.5px solid #a78bfa;
+            font-size: 1.05rem;
+            background: #f9fafb;
+            transition: border 0.2s;
+        }
+        .cadastro input[type="text"]:focus, .cadastro input[type="password"]:focus, .cadastro input[type="email"]:focus {
+            border: 1.5px solid #6d28d9;
+            outline: none;
+            background: #f3f0ff;
         }
         .cadastro button[type="submit"] {
-            background-color: #a78bfa; /* roxo-300 */
+            background: linear-gradient(90deg, #a78bfa 0%, #6d28d9 100%);
             color: #fff;
             font-weight: bold;
-            border-radius: 4px;
+            border-radius: 6px;
             border: none;
-            padding: 10px;
+            padding: 12px;
             cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.2s;
+            font-size: 1.08rem;
+            box-shadow: 0 2px 8px rgba(109,40,217,0.08);
+            transition: background 0.2s, box-shadow 0.2s;
         }
         .cadastro button[type="submit"]:hover {
-            background-color: #7c3aed; 
+            background: linear-gradient(90deg, #7c3aed 0%, #a78bfa 100%);
+            box-shadow: 0 4px 16px rgba(109,40,217,0.15);
         }
         .cancelar-btn {
             background-color: #fff;
             color: #ef4444; 
             font-weight: bold;
-            border-radius: 4px;
+            border-radius: 6px;
             border: 1px solid #ef4444;
             padding: 10px;
             cursor: pointer;
@@ -62,30 +101,19 @@
         .cancelar-btn:hover {
             background: #fee2e2; 
         }
-        label {
-            text-align: left;
-            font-size: 14px;
-            color: #374151;
-        }
-        input[type="text"], input[type="password"], input[type="email"] {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #e5e7eb;
-            font-size: 1rem;
-            width: 100%;
-            box-sizing: border-box;
-        }
         .cadastro p {
             margin-top: 8px;
-            font-size: 14px;
+            font-size: 15px;
             color: #64748b;
         }
         .login-link {
             color: #6d28d9;
             text-decoration: none;
             font-weight: 500;
+            transition: color 0.2s;
         }
         .login-link:hover {
+            color: #a78bfa;
             text-decoration: underline;
         }
         .form-row {
@@ -100,10 +128,27 @@
             flex-direction: column;
             gap: 4px;
         }
+        @media (max-width: 200px) {
+            body {
+                padding-left: 0;
+                padding-right: 0;
+            }
+            .cadastro {
+                max-width: 98vw;
+                width: 98vw;
+                margin-left: auto;
+                margin-right: auto;
+                padding: 24px 8px;
+                border-radius: 8px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="cadastro">
+    <form class="cadastro">
         <h1>Criar Conta &#8962;</h1>
         
         <div class="form-row">
@@ -118,36 +163,46 @@
         </div>
 
         <div class="form-group">
+            <label for="user_name">Nome de usuario</label>
+            <input id=" user_name" type="text" required>
+        </div>
+
+        <div class="form-group">
             <label for="email">Email</label>
             <input id="email" type="email" placeholder="seu@email.com" required>
         </div>
 
+        
         <div class="form-group">
-            <label for="senha">Senha</label>
-            <input id="senha" type="password" placeholder="Mínimo 6 caracteres" required minlength="6">
-        </div>
+            <label for="cpf">CPF</label>
+        <input id="cpf" type="text" placeholder="12345678911" required maxlength ="11">
+    </div>
 
-        <div class="form-group">
-            <label for="confirmar-senha">Confirmar Senha</label>
+    <div class="form-group">
+        <label for="senha">Senha</label>
+        <input id="senha" type="password" placeholder="Mínimo 6 caracteres" required minlength="6" maxlength="72">
+    </div>
+
+    <div class="form-group">
+        <label for="confirmar-senha">Confirmar Senha</label>
             <input id="confirmar-senha" type="password" placeholder="Digite a senha novamente" required>
         </div>
 
         <div class="form-group">
-            <label for="telefone">Telefone (opcional)</label>
-            <input id="telefone" type="text" placeholder="(11) 99999-9999">
+            <label for="telefone">Telefone</label>
+            <input id="telefone" type="text" placeholder="99999-9999" required>
         </div>
 
         <label>
             <input type="checkbox" name="termos" required> 
-            Aceito os <a href="#" class="login-link">termos de uso</a> e <a href="#" class="login-link">política de privacidade</a>
+            Aceito os <a href="termo.html" class="login-link">Termos de uso</a> e <a href="politica.html" class="login-link">Política de Privacidade</a>
         </label>
 
         <button type="submit">Criar Conta</button>
         
-        <button type="button" class="cancelar-btn" onclick="window.location.href='login.html'">Voltar ao Login</button>
         
         <p>Já tem uma conta? <a href="login.html" class="login-link">Faça login aqui</a></p>
-    </div>
+    </form>
 
     <script>
         // Validação de senha
@@ -190,24 +245,40 @@
         // Submissão do formulário
         document.querySelector('.cadastro').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+            const nome = document.getElementById('nome').value;
+            const sobrenome = document.getElementById('sobrenome').value;
+            const nomeCompleto = `${nome} ${sobrenome}`.trim();
+            const email = document.getElementById('email').value;
             const senha = document.getElementById('senha').value;
             const confirmarSenha = document.getElementById('confirmar-senha').value;
             const termos = document.querySelector('input[name="termos"]').checked;
-            
+
             if (senha !== confirmarSenha) {
                 alert('As senhas não coincidem!');
                 return;
             }
-            
+
             if (!termos) {
                 alert('Você deve aceitar os termos de uso!');
                 return;
             }
-            
-            // Aqui você pode adicionar a lógica para enviar os dados para o servidor
-            alert('Conta criada com sucesso! Redirecionando para o login...');
-            window.location.href = 'login.html';
+
+            fetch('http://127.0.0.1:8000/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: senha, nome: nomeCompleto })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Erro ao criar conta');
+                return response.json();
+            })
+            .then(data => {
+                alert('Conta criada com sucesso! Redirecionando para o login...');
+                window.location.href = 'login.html';
+            })
+            .catch(error => {
+                alert('Erro: ' + error.message);
+            });
         });
     </script>
 </body>
