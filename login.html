@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,68 +13,106 @@
         body {
             color: #222;
             text-align: center;
-            background: #fff; 
             min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(120deg, #a78bfa 0%, #f9fafb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .login {
-            background: #f9fafb;
-            max-width: 350px;
-            margin: 40px auto;
-            padding: 32px 24px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: #fff;
+            max-width: 370px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 32px 32px 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(109,40,217,0.10);
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 18px;
+            position: relative;
+            animation: fadein 0.7s;
+        }
+        @keyframes fadein {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         h1 {
-            color: #6d28d9; /* roxo */
-            font-size: 2rem;
-            margin-bottom: 8px;
+            color: #6d28d9;
+            font-size: 2.2rem;
+            margin-bottom: 4px;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
-        .login button[type="submit"] {
-            background-color: #a78bfa; /* roxo-300 */
+        .login label {
+            text-align: left;
+            font-size: 15px;
+            color: #7c3aed;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .login input[type="text"], .login input[type="password"] {
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1.5px solid #a78bfa;
+            font-size: 1.05rem;
+            background: #f9fafb;
+            transition: border 0.2s;
+        }
+        .login input[type="text"]:focus, .login input[type="password"]:focus {
+            border: 1.5px solid #6d28d9;
+            outline: none;
+            background: #f3f0ff;
+        }
+        .login button[type="submit"], .cadastro-btn {
+            background: linear-gradient(90deg, #a78bfa 0%, #6d28d9 100%);
             color: #fff;
             font-weight: bold;
-            border-radius: 4px;
+            border-radius: 6px;
             border: none;
-            padding: 10px;
+            padding: 12px;
             cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.2s;
+            font-size: 1.08rem;
+            box-shadow: 0 2px 8px rgba(109,40,217,0.08);
+            transition: background 0.2s, box-shadow 0.2s;
         }
-        .login button[type="submit"]:hover {
-            background-color: #7c3aed; 
+        .login button[type="submit"]:hover, .cadastro-btn:hover {
+            background: linear-gradient(90deg, #7c3aed 0%, #a78bfa 100%);
+            box-shadow: 0 4px 16px rgba(109,40,217,0.15);
         }
-        .cancelar-btn {
-            background-color: #fff;
-            color: #ef4444; 
-            font-weight: bold;
-            border-radius: 4px;
-            border: 1px solid #ef4444;
-            padding: 10px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.2s, color 0.2s;
-        }
-        .cancelar-btn:hover {
-            background: #fee2e2; 
-        }
-        label {
-            text-align: left;
-            font-size: 14px;
+        .login label[for="remember"] {
             color: #374151;
+            font-size: 13px;
+            font-weight: 400;
         }
-        input[type="text"], input[type="password"] {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #e5e7eb;
-            font-size: 1rem;
+        .login input[type="checkbox"] {
+            accent-color: #a78bfa;
         }
-        .login p {
+        .l-link {
+            color: #6d28d9;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .l-link:hover {
+            color: #a78bfa;
+            text-decoration: underline;
+        }
+        #mensagem {
             margin-top: 8px;
-            font-size: 14px;
+            font-size: 15px;
+            font-weight: 600;
             color: #64748b;
+        }
+        @media (max-width: 500px) {
+            .login {
+                padding: 24px 8px;
+                border-radius: 8px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -84,16 +122,51 @@
         <label for="email">Email</label>
         <input id="email" type="text" placeholder="Email" required>
 
+
         <label for="senha">Senha</label>
         <input id="senha" type="password" placeholder="Senha" required>
-        <button type="submit">Login</button>
+
+        <button id="login-btn" type="submit">Login</button>
 
         <label>
             <input type="checkbox" checked="checked" name="remember"> Remember me
         </label>
         
-        <button type="button" class="cancelar-btn">Cancelar</button>
-        <p>Um portal para melhorar seu dia!</p>
+        <p>Ainda não tem uma conta? <a href="cadastro.html" class="l-link">Cadastre-se aqui</a></p>
+        <p id="mensagem">Um portal para ajudar seu empreendimento!</p>
     </div>
+
+    <script>
+        const btnLogin = document.getElementById("login-btn");
+        const mensagem = document.getElementById("mensagem");
+
+        btnLogin.addEventListener("click", async () => {
+            const email = document.getElementById("email").value;
+            const senha = document.getElementById("senha").value;
+
+            try {
+                const resposta = await fetch("http://127.0.0.1:8000/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: email, password: senha })
+                });
+
+                if (resposta.ok) {
+                    const data = await resposta.json();
+                    // Opcional: salvar o token para uso futuro
+                    localStorage.setItem("access_token", data.access_token);
+                    // Redirecionar para a página principal
+                    window.location.href = "home.html";
+                } else {
+                    const erro = await resposta.json();
+                    mensagem.textContent = "❌ Erro: " + erro.detail;
+                    mensagem.style.color = "red";
+                }
+            } catch (e) {
+                mensagem.textContent = "⚠️ Erro de conexão com o servidor.";
+                mensagem.style.color = "orange";
+            }
+        });
+    </script>
 </body>
 </html>
