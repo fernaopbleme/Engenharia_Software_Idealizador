@@ -62,6 +62,13 @@
           <div class="hint">Seja específico sobre o que está construindo e por que é importante</div>
         </div>
 
+        <!-- CATEGORIA (NOVO CAMPO) -->
+        <div class="field">
+          <label class="label" for="category">Categoria</label>
+          <input class="input" id="category" name="category" type="text" placeholder="ex.: engenharia e música" required />
+          <div class="hint">Tema/área do projeto (uma expressão curta)</div>
+        </div>
+
         <div class="field">
           <label class="label">Habilidades Necessárias</label>
           <div class="row two">
@@ -92,11 +99,9 @@
 
   <script>
     // ========= CONFIG =========
-    // URL da sua API FastAPI
     const API_BASE = "http://localhost:8000";
 
     // ========= MAPEAMENTO DE NÍVEIS (UI → API) =========
-    // UI usa UPPERCASE no <select>; API espera minúsculas
     const LEVEL_UI_TO_API = {
       BEGINNER: "beginner",
       INTERMEDIATE: "intermediate",
@@ -145,7 +150,7 @@
       });
     }
 
-    // ========= CLIENTE HTTP BEM SIMPLES =========
+    // ========= CLIENTE HTTP =========
     async function http(path, init) {
       const res = await fetch(API_BASE + path, {
         headers: { "Content-Type": "application/json" },
@@ -170,7 +175,7 @@
       }
     };
 
-    // ========= REGRAS (resolver tag por nome e montar payload) =========
+    // ========= REGRAS =========
     async function ensureTagIdByName(name) {
       const nm = (name || '').trim(); if (!nm) throw new Error('Nome da habilidade vazio');
       const lower = nm.toLowerCase();
@@ -186,7 +191,7 @@
       return t.id;
     }
 
-    async function createProjectFromUI({ title, description, uiSkills }) {
+    async function createProjectFromUI({ title, description, category, uiSkills }) {
       const links = []; // [{tag_id, skill_level}]
       for (const s of uiSkills) {
         const tag_id = await ensureTagIdByName(s.name);
@@ -194,11 +199,12 @@
         const i = links.findIndex(l => l.tag_id === tag_id);
         if (i >= 0) links[i].skill_level = skill_level; else links.push({ tag_id, skill_level });
       }
-      const payload = { title, description, tags: links };
+      // >>> inclui category no payload <<<
+      const payload = { title, description, category, tags: links };
       return api.createProject(payload);
     }
 
-    // ========= EVENTOS DA SUA TELA =========
+    // ========= EVENTOS =========
     addSkillBtn.addEventListener('click', () => {
       clearAlert();
       const name = (skillName.value || '').trim();
@@ -221,17 +227,19 @@
       clearAlert();
       const title = document.getElementById('title').value.trim();
       const description = document.getElementById('description').value.trim();
+      const category = document.getElementById('category').value.trim(); // ← NOVO
       if (!title) return showAlert('error', 'O título do projeto é obrigatório.');
       if (!description) return showAlert('error', 'A descrição do projeto é obrigatória.');
+      if (!category) return showAlert('error', 'A categoria do projeto é obrigatória.');
 
       try {
-        const proj = await createProjectFromUI({ title, description, uiSkills: skills });
+        const proj = await createProjectFromUI({ title, description, category, uiSkills: skills });
         showAlert('success', 'Projeto criado com sucesso!');
         // reset
         document.getElementById('title').value = '';
         document.getElementById('description').value = '';
+        document.getElementById('category').value = '';
         skills.length = 0; renderSkills();
-        // se quiser redirecionar:
         // if (proj && proj.id) setTimeout(() => location.href = '/projetos/' + proj.id, 700);
       } catch (err) {
         showAlert('error', 'Falha ao criar o projeto. ' + (err.message || ''));
