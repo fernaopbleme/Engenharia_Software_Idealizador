@@ -1,229 +1,325 @@
-<!doctype html>
-<html lang="pt-br">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <title>TeamBuilder — Home (MVP)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --bg: #fafafa;
-      --card: #fff;
-      --text: #111;
-      --muted: #666;
-      --border: #e6e6e6;
-      --primary: #4f46e5;
-      --primary-contrast: #fff;
-      --pill: #f4f4f5;
-      --badge-bg: #ecfdf5;
-      --badge-text: #065f46;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--text); background: var(--bg); }
-    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--card); border-bottom: 1px solid var(--border); }
-    .brand { font-weight: 700; }
-    .menu { display: flex; gap: 8px; align-items: center; }
-    .link { color: var(--text); text-decoration: none; padding: 8px 10px; border-radius: 8px; }
-    .link:hover { background: #f4f4f5; }
-    .btn { padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); cursor: pointer; }
-    .btn:hover { background: #f7f7f7; }
-    .btn-primary { background: var(--primary); color: var(--primary-contrast); border-color: var(--primary); }
-    .btn-primary:hover { filter: brightness(0.95); }
-    .btn-outline { background: var(--card); }
-    .container { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
-    .hero { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; text-align: center; }
-    .hero h1 { margin: 0 0 4px; }
-    .hero p { margin: 0 0 16px; color: var(--muted); }
-    .search-bar { display: grid; grid-template-columns: 1fr auto; gap: 8px; max-width: 720px; margin: 0 auto; }
-    .search-bar input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; }
-    .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
-    .team { margin-top: 24px; }
-    .team-head { display: flex; align-items: center; justify-content: space-between; }
-    .badge { background: var(--badge-bg); color: var(--badge-text); border: 1px solid #a7f3d0; padding: 4px 8px; border-radius: 999px; font-size: 12px; }
-    .grid { display: grid; gap: 12px; grid-template-columns: repeat(1, minmax(0, 1fr)); margin-top: 12px; }
-    @media (min-width: 720px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (min-width: 1040px){ .grid { grid-template-columns: repeat(3, 1fr); } }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
-    .card-head { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; }
-    .avatar { width: 48px; height: 48px; border-radius: 999px; background: #e9e9ee; display: grid; place-items: center; font-weight: 700; color: var(--muted); overflow: hidden; }
-    .avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .info .name { margin: 0; font-size: 16px; }
-    .info .role { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
-    .info .xps { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
-    .status-dot { width: 10px; height: 10px; border-radius: 999px; background: #9ca3af; }
-    .status-dot[data-status="online"] { background: #10b981; }
-    .status-dot[data-status="busy"]   { background: #f59e0b; }
-    .specialties, .skills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .specialties .pill { display: inline-flex; align-items: center; gap: 6px; background: var(--pill); border: 1px solid var(--border); border-radius: 999px; padding: 6px 8px; font-size: 12px; }
-    .specialties .dots { display: inline-flex; gap: 3px; }
-    .specialties .dot { width: 6px; height: 6px; border-radius: 999px; background: #d4d4d8; }
-    .specialties .dot.active { background: #6366f1; }
-    .skills .tag { background: var(--pill); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; font-size: 12px; }
-    .bio { margin-top: 10px; font-size: 13px; color: var(--muted); }
-    .footer { text-align: center; font-size: 12px; color: var(--muted); padding: 24px; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TeamBuilder - Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <header class="topbar">
-    <div class="brand">TeamBuilder</div>
-    <nav class="menu">
-      <a href="#" class="link">Perfil</a>
-      <a href="#" class="link">Meus Projetos</a>
-      <a href="./Criar_projeto/criar_projeto.html" class="btn btn-primary">Nova Ideia</a>
-    </nav>
+
+<body class="bg-gray-50 min-h-screen">
+
+  <header class="bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-700 border-b border-white/20 px-6 py-4 shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-white">TeamBuilder</h1>
+      <nav class="flex items-center gap-6">
+        <a href="./Criar_projeto/criar_projeto.html" class="text-white px-4 py-2 rounded-xl hover:bg-white/20 transition-colors font-medium">Nova Ideia</a>
+      </nav>
+    </div>
   </header>
 
-  <main class="container">
-    <section class="hero">
-      <h1>Encontre Sua Equipe</h1>
-      <p>Busque colaboradores por habilidades, experiência ou localização.</p>
-      <div class="search-bar">
-        <input id="searchInput" type="search" placeholder="Ex.: React, DevOps, São Paulo..." />
-        <button id="searchBtn" class="btn">Buscar</button>
+  <main class="max-w-7xl mx-auto px-6 py-12">
+    <!-- Achar seu time -->
+    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 mb-8">
+      <div class="text-center mb-8">
+        <h2 class="text-5xl font-bold text-gray-900 mb-4">Encontre Sua Equipe</h2>
+        <p class="text-gray-500 text-lg">
+          Busque colaboradores por habilidades
+        </p>
       </div>
-      <div class="actions">
-        <button class="btn btn-outline" id="addMemberBtn">+ Adicionar Colaborador</button>
-        <button class="btn btn-outline">Explorar Equipes</button>
-        <button class="btn btn-outline">Filtros Avançados</button>
+
+      <!-- Barra de pesquisa -->
+      <div class="flex gap-3 max-w-3xl mx-auto mb-8">
+        <div class="flex-1 relative">
+          <svg
+            class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Ex.: React, DevOps, Java..."
+            class="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-700"
+          />
+        </div>
+        <button
+          id="searchBtn"
+          class="bg-violet-700 text-white px-8 py-3.5 rounded-xl transition duration-200 font-medium hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-purple-700"
+        >
+          Buscar
+        </button>
       </div>
+
+      <!-- adicionar colaborador -->
+      <div class="text-center mb-8">
+        <button
+          id="addMemberBtn"
+          class="border-2 border-dashed border-gray-300 text-gray-700 px-6 py-3 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-colors font-medium"
+        >
+          + Adicionar Colaborador
+        </button>
+      </div>
+
+      <!-- Resultados da busca de colaboradores -->
+      <div id="colaboradoresContainer" class="mt-8 hidden"></div>
     </section>
 
-    <section class="team">
-      <div class="team-head">
-        <h2>Sua Equipe</h2>
-        <span id="teamCount" class="badge">0 colaboradores</span>
+    <!--Meus projetos-->
+    <section>
+      <div class="bg-violet-700 text-white px-8 py-4 rounded-t-2xl inline-block">
+        <h2 class="text-2xl font-bold">Meus projetos:</h2>
       </div>
 
-      <div id="teamGrid" class="grid"></div>
-
-      <template id="memberCardTpl">
-        <article class="card">
-          <div class="card-head">
-            <div class="avatar" data-initials=""></div>
-            <div class="info">
-              <h3 class="name"></h3>
-              <p class="role"></p>
-              <p class="xps"></p>
-            </div>
-            <span class="status-dot"></span>
-          </div>
-          <div class="specialties"></div>
-          <div class="skills"></div>
-          <p class="bio"></p>
-        </article>
-      </template>
+      <div id="projectsContainer" class="space-y-6 mt-2"></div>
     </section>
   </main>
 
-  <footer class="footer">© <span id="year"></span> TeamBuilder</footer>
-
   <script>
-    const apiUrl = "/api/team"; // ajuste se necessário
-    const teamGrid = document.getElementById("teamGrid");
-    const teamCount = document.getElementById("teamCount");
-    const tpl = document.getElementById("memberCardTpl");
+    const API_BASE = "http://localhost:8000";
     const searchInput = document.getElementById("searchInput");
     const searchBtn = document.getElementById("searchBtn");
-    document.getElementById("year").textContent = new Date().getFullYear();
+    const projectsContainer = document.getElementById("projectsContainer");
+    const colaboradoresContainer = document.getElementById("colaboradoresContainer");
+    const addMemberBtn = document.getElementById("addMemberBtn");
 
-    let members = [];
+    // Mapeamento de níveis para português
+    const levelNames = {
+      "beginner": "Iniciante",
+      "intermediate": "Intermediário",
+      "intermediative": "Intermediário",
+      "advanced": "Avançado"
+    };
 
-    function initials(name = "") {
-      return name.split(" ").map(s => s[0]?.toUpperCase() || "").slice(0,2).join("");
-    }
-
-    function normalizeApiTeamResponse(data) {
-      if (!Array.isArray(data)) return [];
-      return data.map((row, idx) => ({
-        id: String(row.id ?? idx),
-        name: row.name ?? row.nome ?? "Membro",
-        role: row.role ?? row.cargo ?? "Colaborador",
-        experienceYears: row.experienceYears ?? row.anosExperiencia ?? null,
-        avatarUrl: row.avatarUrl ?? row.fotoUrl ?? null,
-        status: row.status ?? "offline",
-        specialties: (row.specialties ?? row.especialidades ?? []).map(s => ({
-          code: String(s.code ?? s.sigla ?? "SP"),
-          label: String(s.label ?? s.nome ?? "Especialidade"),
-          level: Number(s.level ?? s.nivel ?? 3)
-        })),
-        skills: (row.skills ?? row.habilidades ?? []).map(String),
-        bio: row.bio ?? row.descricao ?? ""
-      }));
-    }
-
-    function render(list) {
-      teamGrid.innerHTML = "";
-      list.forEach(m => {
-        const node = tpl.content.cloneNode(true);
-
-        const avatar = node.querySelector(".avatar");
-        if (m.avatarUrl) {
-          const img = document.createElement("img");
-          img.src = m.avatarUrl; img.alt = m.name;
-          avatar.textContent = ""; avatar.appendChild(img);
-        } else {
-          avatar.textContent = initials(m.name);
-        }
-
-        node.querySelector(".name").textContent = m.name;
-        node.querySelector(".role").textContent = m.role;
-        node.querySelector(".xps").textContent = m.experienceYears != null ? `${m.experienceYears}+ anos de experiência` : "";
-        node.querySelector(".status-dot").setAttribute("data-status", m.status);
-
-        const specs = node.querySelector(".specialties");
-        m.specialties?.forEach(s => {
-          const pill = document.createElement("span");
-          pill.className = "pill";
-          pill.title = s.label;
-          pill.innerHTML = `<strong>${s.code}</strong> <span class="dots">${[0,1,2,3,4].map(i => `<span class="dot ${i < s.level ? "active" : ""}"></span>`).join("")}</span>`;
-          specs.appendChild(pill);
-        });
-
-        const skills = node.querySelector(".skills");
-        m.skills?.forEach(t => {
-          const tag = document.createElement("span");
-          tag.className = "tag";
-          tag.textContent = t;
-          skills.appendChild(tag);
-        });
-
-        node.querySelector(".bio").textContent = m.bio ?? "";
-        teamGrid.appendChild(node);
-      });
-      teamCount.textContent = `${list.length} colaborador${list.length === 1 ? "" : "es"}`;
-    }
-
-    async function load() {
+    async function listProjects() {
       try {
-        const res = await fetch(apiUrl, { headers: { "Content-Type": "application/json" }});
+        const res = await fetch(`${API_BASE}/projects`, {
+          headers: { "Content-Type": "application/json" }
+        });
         if (!res.ok) throw new Error("HTTP " + res.status);
-        const data = await res.json();
-        members = normalizeApiTeamResponse(data);
+        const projects = await res.json();
+        await renderProjects(projects);
       } catch (e) {
-        members = [
-          { id:"1", name:"Sarah Chen", role:"Full Stack", experienceYears:5, avatarUrl:null, status:"online", specialties:[{code:"FR", label:"Frontend", level:4}], skills:["React","TS"], bio:"" },
-          { id:"2", name:"Marcus Johnson", role:"DevOps", experienceYears:7, avatarUrl:null, status:"busy", specialties:[{code:"NU", label:"Nuvem", level:3}], skills:["Docker","K8s"], bio:"" }
-        ];
+        console.error("Erro ao carregar projetos:", e);
+        projectsContainer.innerHTML = `
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <p class="text-gray-500 text-center">Erro ao carregar projetos. Verifique se a API mock está rodando.</p>
+          </div>
+        `;
       }
-      render(members);
+    }
+
+    async function renderProjects(projects) {
+      projectsContainer.innerHTML = "";
+      if (!projects || projects.length === 0) {
+        projectsContainer.innerHTML = `
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <p class="text-gray-500 text-center">Nenhum projeto encontrado. <a href="./Criar_projeto/criar_projeto.html" class="text-violet-700 hover:underline">Criar primeiro projeto</a></p>
+          </div>
+        `;
+        return;
+      }
+      
+      for (const project of projects) {
+        await renderProjectCard(project);
+      }
+    }
+
+    async function renderProjectCard(project) {
+      const card = document.createElement("div");
+      card.className = "bg-white rounded-2xl shadow-sm border border-gray-200 p-8";
+
+      // Buscar colaboradores inscritos no projeto
+      let colaboradores = [];
+      try {
+        const res = await fetch(`${API_BASE}/colaboradores/inscritos/${project.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          colaboradores = data.colaboradores || [];
+        }
+      } catch (e) {
+        console.error(`Erro ao buscar colaboradores ${project.id}:`, e);
+      }
+
+      // Renderizar colaboradores inscritos
+      const colaboradoresHtml = colaboradores.length > 0 ? `
+        <div class="mt-4 flex flex-wrap gap-4">
+          ${colaboradores.map(colab => {
+            const habilidadePrincipal = colab.skills && colab.skills.length > 0 
+              ? colab.skills[0] 
+              : null;
+            return `
+            <div class="flex flex-col items-center">
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-semibold text-lg shadow-md hover:scale-110 transition-transform cursor-pointer">
+                ${colab.nome.charAt(0).toUpperCase()}
+              </div>
+              <div class="mt-2 text-center">
+                <p class="font-semibold text-gray-900 text-xs truncate max-w-[80px]">${colab.nome}</p>
+                ${habilidadePrincipal ? `
+                  <p class="text-xs text-gray-600 mt-0.5 truncate max-w-[80px]">
+                    ${habilidadePrincipal.nome}
+                  </p>
+                ` : ''}
+              </div>
+            </div>
+          `;
+          }).join("")}
+        </div>
+      ` : '';
+
+      card.innerHTML = `
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">${project.title || "Sem título"}</h3>
+            <p class="text-gray-600 text-sm">${project.description || "Sem descrição"}</p>
+          </div>
+          <a href="./pagina_projeto.html?id=${project.id}" class="text-violet-700 hover:text-violet-900 font-medium text-sm ml-4">
+            Ver detalhes →
+          </a>
+        </div>
+        ${colaboradoresHtml}
+      `;
+
+      projectsContainer.appendChild(card);
+    }
+
+    async function listColaboradores() {
+      try {
+        const res = await fetch(`${API_BASE}/colaboradores`, {
+          headers: { "Content-Type": "application/json" }
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const colaboradores = await res.json();
+        renderColaboradores(colaboradores);
+      } catch (e) {
+        console.error("Erro ao carregar colaboradores:", e);
+        colaboradoresContainer.innerHTML = `
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <p class="text-gray-500 text-center">Erro ao carregar colaboradores. Verifique se a API mock está rodando.</p>
+          </div>
+        `;
+      }
+    }
+
+    async function searchColaboradores(query) {
+      try {
+        const res = await fetch(`${API_BASE}/colaboradores`, {
+          headers: { "Content-Type": "application/json" }
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const colaboradores = await res.json();
+        
+        // Filtrar colaboradores por habilidades que correspondem à busca
+        const queryLower = query.toLowerCase();
+        const filtered = colaboradores.filter(colab => {
+          // Buscar por nome, email, cargo ou habilidades
+          const nomeMatch = colab.nome.toLowerCase().includes(queryLower);
+          const emailMatch = colab.email.toLowerCase().includes(queryLower);
+          const cargoMatch = colab.cargo.toLowerCase().includes(queryLower);
+          const habilidadesMatch = colab.skills.some(habilidade => 
+            habilidade.nome.toLowerCase().includes(queryLower)
+          );
+          
+          return nomeMatch || emailMatch || cargoMatch || habilidadesMatch;
+        });
+        
+        renderColaboradores(filtered, query);
+      } catch (e) {
+        console.error("Erro ao buscar colaboradores:", e);
+        colaboradoresContainer.innerHTML = `
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <p class="text-gray-500 text-center">Erro ao buscar colaboradores. Verifique se a API mock está rodando.</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderColaboradores(colaboradores, searchQuery = null) {
+      colaboradoresContainer.classList.remove("hidden");
+      colaboradoresContainer.innerHTML = "";
+      
+      if (!colaboradores || colaboradores.length === 0) {
+        colaboradoresContainer.innerHTML = `
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <p class="text-gray-500 text-center">
+              ${searchQuery ? `Nenhum colaborador encontrado para "${searchQuery}".` : "Nenhum colaborador encontrado."}
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      const title = searchQuery 
+        ? `<h3 class="text-xl font-bold text-gray-900 mb-6">Resultados para "${searchQuery}" (${colaboradores.length})</h3>`
+        : `<h3 class="text-xl font-bold text-gray-900 mb-6">Todos os Colaboradores (${colaboradores.length})</h3>`;
+
+      colaboradoresContainer.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          ${title}
+          <div class="space-y-4">
+            ${colaboradores.map(colab => `
+              <div class="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
+                <div class="flex items-start justify-between mb-4">
+                  <div class="flex-1">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-1">${colab.nome}</h4>
+                    <p class="text-sm text-gray-600 mb-1">${colab.cargo}</p>
+                    <p class="text-xs text-gray-500 mb-2">${colab.email}</p>
+                    ${colab.level ? `
+                      <span class="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium mb-3">
+                        Nível: ${levelNames[colab.level] || colab.level}
+                      </span>
+                    ` : ""}
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <p class="text-sm font-medium text-gray-700 mb-2">Habilidades:</p>
+                  <div class="flex flex-wrap gap-2">
+                    ${colab.skills && colab.skills.length > 0 ? colab.skills.map(habilidade => `
+                      <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                        ${habilidade.nome} - ${levelNames[habilidade.nivel] || habilidade.nivel}
+                      </span>
+                    `).join("") : '<span class="text-gray-400 text-xs">Nenhuma habilidade cadastrada</span>'}
+                  </div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
     }
 
     function doSearch() {
-      const q = (searchInput.value || "").toLowerCase();
-      if (!q) return render(members);
-      const filtered = members.filter(m =>
-        m.name.toLowerCase().includes(q) ||
-        m.role.toLowerCase().includes(q) ||
-        (m.bio || "").toLowerCase().includes(q) ||
-        m.skills?.some(s => s.toLowerCase().includes(q)) ||
-        m.specialties?.some(s => s.label.toLowerCase().includes(q) || s.code.toLowerCase().includes(q))
-      );
-      render(filtered);
+      const q = searchInput.value.trim();
+      if (!q) {
+        colaboradoresContainer.classList.add("hidden");
+        listProjects();
+        return;
+      }
+      
+      // Buscar colaboradores
+      searchColaboradores(q);
     }
 
     searchBtn.addEventListener("click", doSearch);
     searchInput.addEventListener("keyup", (e) => { if (e.key === "Enter") doSearch(); });
 
-    load();
+    addMemberBtn.addEventListener("click", () => {
+      // Mostrar todos os colaboradores ao clicar em adicionar
+      listColaboradores();
+      // Rolar até a seção de colaboradores
+      colaboradoresContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    // Carregar projetos ao carregar a página
+    listProjects();
   </script>
 </body>
 </html>
