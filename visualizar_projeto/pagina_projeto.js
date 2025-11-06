@@ -4,7 +4,6 @@ const API_BASE = "http://localhost:8000";
 const levelNames = {
     "beginner": "Iniciante",
     "intermediate": "Intermediário",
-    "intermediative": "Intermediário",
     "advanced": "Avançado"
 };
 

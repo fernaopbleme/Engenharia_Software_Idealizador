@@ -9,7 +9,6 @@ const addMemberBtn = document.getElementById("addMemberBtn");
 const levelNames = {
   "beginner": "Iniciante",
   "intermediate": "Intermediário",
-  "intermediative": "Intermediário",
   "advanced": "Avançado"
 };
 
@@ -41,6 +40,7 @@ async function renderProjects(projects) {
     `;
     return;
   }
+  
   
   for (const project of projects) {
     await renderProjectCard(project);
