@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TeamBuilder - Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./css/home.css">
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+  <header class="bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-700 border-b border-white/20 px-6 py-4 shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-white">TeamBuilder</h1>
+      <nav class="flex items-center gap-6">
+        <a href="../Criar_projeto/criar_projeto.html" class="text-white px-4 py-2 rounded-xl hover:bg-white/20 transition-colors font-medium">Nova Ideia</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-12">
+    <!-- Achar seu time -->
+    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 mb-8">
+      <div class="text-center mb-8">
+        <h2 class="text-5xl font-bold text-gray-900 mb-4">Encontre Sua Equipe</h2>
+        <p class="text-gray-500 text-lg">
+          Busque colaboradores por habilidades
+        </p>
+      </div>
+
+      <!-- Barra de pesquisa -->
+      <div class="flex gap-3 max-w-3xl mx-auto mb-8">
+        <div class="flex-1 relative">
+          <svg
+            class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Ex.: React, DevOps, Java..."
+            class="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-700"
+          />
+        </div>
+        <button
+          id="searchBtn"
+          class="bg-violet-700 text-white px-8 py-3.5 rounded-xl transition duration-200 font-medium hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-purple-700"
+        >
+          Buscar
+        </button>
+      </div>
+
+      <!-- adicionar colaborador -->
+      <div class="text-center mb-8">
+        <button
+          id="addMemberBtn"
+          class="border-2 border-dashed border-gray-300 text-gray-700 px-6 py-3 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-colors font-medium"
+        >
+          + Adicionar Colaborador
+        </button>
+      </div>
+
+      <!-- Resultados da busca de colaboradores -->
+      <div id="colaboradoresContainer" class="mt-8 hidden"></div>
+    </section>
+
+    <!--Meus projetos-->
+    <section>
+      <div class="bg-violet-700 text-white px-8 py-4 rounded-t-2xl inline-block">
+        <h2 class="text-2xl font-bold">Meus projetos:</h2>
+      </div>
+
+      <div id="projectsContainer" class="space-y-6 mt-2"></div>
+    </section>
+  </main>
+
+  <script src="home.js"></script>
+</body>
+</html>
+
