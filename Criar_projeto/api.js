@@ -1,5 +1,5 @@
 js/api.js
-const API_BASE = "https://bdprojetos.azurewebsites.net"; // ajuste se necessário
+const API_BASE = "http:bdprojetos.azurewebsites.net"; // ajuste se necessário
 
 async function http(path, init) {
   const res = await fetch(API_BASE + path, {

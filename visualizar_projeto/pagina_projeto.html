@@ -1,110 +1,168 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!doctype html>
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeamBuilder - Detalhes do Projeto</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../visualizar_projeto/pagina_projeto.css">
+  <meta charset="utf-8" />
+  <title>TeamBuilder — Meus Projetos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
+  <!-- Topbar -->
+  <header class="bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-700 border-b border-white/20 px-6 py-4 shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-white">TeamBuilder</h1>
+      <nav class="flex items-center gap-3 text-white">
+        <span id="whoami" class="opacity-90"></span>
+        <a href="../home/home.html" class="px-4 py-2 rounded-xl hover:bg-white/20 transition-colors font-medium">Home</a>
+      </nav>
+    </div>
+  </header>
 
-    <header class="bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-700 border-b border-white/20 px-6 py-4 shadow-md">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <h1 class="text-2xl font-bold text-white">TeamBuilder</h1>
-            <nav class="flex items-center gap-6">
-                <a href="../home/home.html" class="text-white px-4 py-2 rounded-xl hover:bg-white/20 transition-colors font-medium">Voltar para Home</a>
-            </nav>
+  <main class="max-w-7xl mx-auto px-6 py-10">
+    <!-- Estado de carregamento -->
+    <div id="loading" class="text-center py-16">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-violet-700"></div>
+      <p class="mt-4 text-gray-600">Carregando seus projetos…</p>
+    </div>
+
+    <!-- Estado de erro -->
+    <div id="error" class="hidden bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+      <p class="text-red-700 text-lg font-semibold" id="errorMsg"></p>
+    </div>
+
+    <!-- Conteúdo -->
+    <section id="content" class="hidden">
+      <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-900">Meus Projetos</h2>
+        <span id="count" class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-sm font-medium">0</span>
+      </div>
+
+      <!-- Vazio -->
+      <div id="empty" class="hidden text-center py-16">
+        <svg class="mx-auto h-16 w-16 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 12c0 4.418-3.582 8-8 8-1.85 0-3.554-.63-4.9-1.69L3 20l1.69-3.1A7.953 7.953 0 014 12c0-4.418 3.582-8 8-8s8 3.582 8 8z"/>
+        </svg>
+        <p class="mt-4 text-gray-500">Você ainda não criou nenhum projeto.</p>
+      </div>
+
+      <!-- Grade de cards -->
+      <div id="grid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </section>
+  </main>
+
+  <script>
+    // ===== Config =====
+    const API_BASE  = "https://bdprojetos.azurewebsites.net"; // seu micro de projetos
+    // Se quiser usar o Bearer do login, mantenha-o; senão, apenas deixe o token vazio no localStorage.
+
+    // ===== Sessão (mesma convenção da sua outra página) =====
+    const AUTH_KEY = "auth.user"; // { email, token }
+    const authStore = {
+      get(){ try { return JSON.parse(localStorage.getItem(AUTH_KEY) || "null"); } catch { return null; } },
+      set(v){ localStorage.setItem(AUTH_KEY, JSON.stringify(v)); },
+      clear(){ localStorage.removeItem(AUTH_KEY); }
+    };
+    const getEmail = () => authStore.get()?.email || "";
+    const getToken = () => authStore.get()?.token || "";
+
+    // ===== Helper HTTP com headers necessários =====
+    async function http(path, init = {}) {
+      const headers = { "Content-Type": "application/json", ...(init.headers || {}) };
+      const email = getEmail();
+      const token = getToken();
+      if (email) headers["X-User-Email"] = email;              // <- obrigatório p/ mine=1
+      if (token) headers["Authorization"] = `Bearer ${token}`;  // <- opcional (seu back não valida ainda)
+
+      const res = await fetch(API_BASE + path, { ...init, headers });
+      if (!res.ok) {
+        let msg = res.status + " " + res.statusText;
+        try { const d = await res.json(); if (d?.detail) msg = d.detail; } catch {}
+        throw new Error(msg);
+      }
+      return res.json();
+    }
+
+    // ===== Renderização =====
+    const elLoading = document.getElementById("loading");
+    const elError   = document.getElementById("error");
+    const elErrorMsg= document.getElementById("errorMsg");
+    const elContent = document.getElementById("content");
+    const elGrid    = document.getElementById("grid");
+    const elEmpty   = document.getElementById("empty");
+    const elCount   = document.getElementById("count");
+    const elWhoami  = document.getElementById("whoami");
+
+    function show(el){ el.classList.remove("hidden"); }
+    function hide(el){ el.classList.add("hidden"); }
+
+    function card(project){
+      const tagCount = (project.tags || []).length;
+      const memberCount = (project.members || []).length;
+      const cat = project.category || "Sem categoria";
+      const id  = project.id;
+
+      const div = document.createElement("div");
+      div.className = "bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition cursor-pointer";
+      div.innerHTML = `
+        <div class="flex items-start justify-between mb-3">
+          <h3 class="text-lg font-semibold text-gray-900">${escapeHtml(project.title || "Sem título")}</h3>
+          <span class="text-xs bg-violet-100 text-violet-700 px-2 py-1 rounded-full">${tagCount} tag${tagCount!==1?'s':''}</span>
         </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-6 py-12">
-        <!-- Loading State -->
-        <div id="loading" class="text-center py-12">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-violet-700"></div>
-            <p class="mt-4 text-gray-600">Carregando projeto...</p>
+        <p class="text-gray-600 text-sm line-clamp-3 mb-3">${escapeHtml(project.description || "Sem descrição")}</p>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-gray-500">Categoria: <span class="font-medium">${escapeHtml(cat)}</span></span>
+          <span class="text-gray-500">${memberCount} membro${memberCount!==1?'s':''}</span>
         </div>
+      `;
+      div.onclick = () => {
+        // abra sua página de detalhes
+        window.location.href = `../visualizar_projeto/pagina_projeto.html?id=${id}`;
+      };
+      return div;
+    }
 
-        <!-- Error State -->
-        <div id="error" class="bg-red-50 border border-red-200 rounded-xl p-8 text-center hidden">
-            <p class="text-red-700 text-lg font-semibold"></p>
-        </div>
+    // evita XSS simples no HTML de cards
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
 
-        <!-- Project Content -->
-        <div id="project-content" class="hidden">
-            <!-- Project Header -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex-1">
-                        <h1 class="text-4xl font-bold text-gray-900 mb-2" id="titulo-projeto">Carregando...</h1>
-                        <p class="text-gray-600 text-lg mb-4" id="descricao-projeto"></p>
-                        <p id="categoria-projeto" class="text-sm text-gray-500"></p>
-                    </div>
-                </div>
+    // ===== Carga principal =====
+    async function loadMyProjects(){
+      const email = getEmail();
+      elWhoami.textContent = email ? `Logado como: ${email}` : "Não logado";
 
-                <!-- Skills/Tags -->
-                <div id="tags-projeto" class="flex flex-wrap gap-2 mb-6"></div>
-            </div>
+      if (!email){
+        hide(elLoading); hide(elContent);
+        elErrorMsg.textContent = "Você precisa estar logado para ver seus projetos.";
+        show(elError); return;
+      }
 
-            <!-- Compatible Collaborators -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-8">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-bold text-gray-900">Colaboradores</h2>
-                    <span id="count-colab" class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-sm font-medium">0</span>
-                </div>
-                
-                <div id="colaboradores-lista" class="space-y-4">
-                    <!-- Colaboradores serão inseridos aqui -->
-                </div>
+      try{
+        const projects = await http("/projects?mine=1");
+        hide(elLoading); show(elContent);
 
-                <!-- Empty State -->
-                <div id="empty-colab" class="text-center py-12 hidden">
-                    <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <p class="mt-4 text-gray-500">Nenhum colaborador inscrito neste projeto.</p>
-                </div>
-            </div>
+        elGrid.innerHTML = "";
+        elCount.textContent = projects.length;
 
-            <!-- Área de IA -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
-                        🤖
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900">Assistente de IA</h2>
-                        <p class="text-sm text-gray-500">Conectado com colaboradores do projeto</p>
-                    </div>
-                </div>
-                
-                <div id="ia-info" class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p class="text-sm text-blue-700">
-                        <strong>IDs dos colaboradores:</strong> <span id="colaboradores-ids"></span>
-                    </p>
-                    <p class="text-xs text-blue-600 mt-2">
-                        Esta área está preparada para integração com microsserviço de IA externo.
-                    </p>
-                </div>
+        if (projects.length === 0){
+          show(elEmpty);
+          return;
+        }
+        hide(elEmpty);
 
-                <!-- Container vazio para IA do microsserviço -->
-                <div id="ia-container" class="border-2 border-dashed border-gray-300 rounded-lg p-8 bg-gray-50 min-h-[400px]">
-                    <div class="flex flex-col items-center justify-center h-full text-center">
-                        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <p class="text-gray-500 text-lg font-medium mb-2">Área para Integração de IA</p>
-                        <p class="text-gray-400 text-sm max-w-md">
-                            Este espaço está reservado para o componente de IA do microsserviço externo.
-                            Os IDs dos colaboradores estão disponíveis acima para conexão.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
+        projects.forEach(p => elGrid.appendChild(card(p)));
+      }catch(err){
+        hide(elLoading);
+        elErrorMsg.textContent = "Erro ao buscar projetos: " + (err.message || "desconhecido");
+        show(elError);
+      }
+    }
 
-    <script src="pagina_projeto.js"></script>
+    // init
+    loadMyProjects();
+  </script>
 </body>
 </html>
-

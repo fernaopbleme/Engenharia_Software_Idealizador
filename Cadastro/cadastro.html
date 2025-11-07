@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Cadastro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href = "cadastro.css"> 
+</head>
+<body>
+    <form class="cadastro">
+        <h1>Criar Conta &#8962;</h1>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="nome">Nome</label>
+                <input id="nome" type="text" placeholder="Seu nome" required>
+            </div>
+            <div class="form-group">
+                <label for="sobrenome">Sobrenome</label>
+                <input id="sobrenome" type="text" placeholder="Seu sobrenome" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="user_name">Nome de usuario</label>
+            <input id="nomeUsuario" type="text" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="seu@email.com" required>
+        </div>
+        
+        
+        <div class="form-group">
+            <label for="cpf">CPF</label>
+            <input id="cpf" type="text" placeholder="12345678911" required maxlength ="11">
+        </div>
+        
+        <div class="form-group">
+            <label for="senha">Senha</label>
+            <input id="senha" type="password" placeholder="Mínimo 6 caracteres" required minlength="6" maxlength="72">
+        </div>
+        
+        <div class="form-group">
+            <label for="confirmar-senha">Confirmar Senha</label>
+            <input id="confirmar-senha" type="password" placeholder="Digite a senha novamente" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="telefone">Telefone</label>
+            <input id="telefone" type="text" placeholder="(11) 99999-9999" required>
+        </div>
+        
+        <label>
+            <input type="checkbox" name="termos" required> 
+            Aceito os <a href="../termo.html" class="login-link">Termos de uso</a> e <a href="../politica.html" class="login-link">Política de Privacidade</a>
+        </label>
+        
+        <button type="submit">Criar Conta</button>
+        
+        
+        <p>Já tem uma conta? <a href="../login/login.html" class="login-link">Faça login aqui</a></p>
+    </form>
+    
+    
+<script src="cadastro.js"></script>
+</body>
+</html>

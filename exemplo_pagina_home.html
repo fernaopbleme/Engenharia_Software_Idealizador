@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TeamBuilder - Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./css/home.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <header class="bg-gradient-to-r from-indigo-500 via-purple-600 to-violet-700 border-b border-white/20 px-6 py-4 shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-white">TeamBuilder</h1>
+      <nav class="flex items-center gap-6">
+        <a href="../Criar_projeto/criar_projeto.html" class="text-white px-4 py-2 rounded-xl hover:bg-white/20 transition-colors font-medium">Nova Ideia</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-12">
+    <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 mb-8">
+      <div class="text-center mb-8">
+        <h2 class="text-5xl font-bold text-gray-900 mb-4">Encontre Sua Equipe</h2>
+        <p class="text-gray-500 text-lg">Busque colaboradores por habilidades</p>
+      </div>
+
+      <div class="flex gap-3 max-w-3xl mx-auto mb-8">
+        <div class="flex-1 relative">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input id="searchInput" type="text" placeholder="Ex.: React, DevOps, Java..." class="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 text-gray-700"/>
+        </div>
+        <button id="searchBtn" class="bg-violet-700 text-white px-8 py-3.5 rounded-xl transition duration-200 font-medium hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-purple-700">
+          Buscar
+        </button>
+      </div>
+
+      <div class="text-center mb-8">
+        <button id="addMemberBtn" class="border-2 border-dashed border-gray-300 text-gray-700 px-6 py-3 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-colors font-medium">
+          + Adicionar Colaborador
+        </button>
+      </div>
+
+      <div id="colaboradoresContainer" class="mt-8 hidden"></div>
+    </section>
+
+    <section>
+      <div class="bg-violet-700 text-white px-8 py-4 rounded-t-2xl inline-block">
+        <h2 class="text-2xl font-bold">Meus projetos:</h2>
+      </div>
+      <div id="projectsContainer" class="space-y-6 mt-2"></div>
+    </section>
+  </main>
+
+  <script>
+    /* ===================== CONFIG ===================== */
+    var API_BASE = "https://bdprojetos.azurewebsites.net";
+    var AUTH_KEY = "auth.user";             // { email, token }
+    var LEGACY_TOKEN_KEY = "access_token";  // salvo pelo Login
+
+    /* =================== SESSÃO =================== */
+    function getSession() {
+      try { return JSON.parse(localStorage.getItem(AUTH_KEY) || "null"); }
+      catch (e) { return null; }
+    }
+    function saveSession(email, token) {
+      localStorage.setItem(AUTH_KEY, JSON.stringify({ email: email, token: token }));
+    }
+
+    // decodifica payload de JWT (base64url)
+    function decodeJwtPayload(token){
+      try {
+        const p = token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");
+        const json = decodeURIComponent(atob(p).split("").map(c=>"%" + ("00"+c.charCodeAt(0).toString(16)).slice(-2)).join(""));
+        return JSON.parse(json);
+      } catch { return null; }
+    }
+
+    // migra o token legado para {email, token}
+    function ensureSessionFromLegacy() {
+      var s = getSession();
+      if (s && s.email && s.token) return;
+      var token = localStorage.getItem(LEGACY_TOKEN_KEY);
+      if (!token) return;
+      var payload = decodeJwtPayload(token);
+      var email = payload && (payload.email || payload.sub);
+      if (email) saveSession(email, token);
+    }
+
+    function buildAuthHeaders(extra) {
+      if (!extra) extra = {};
+      const t = localStorage.getItem("access_token");
+      const h = { "Content-Type": "application/json" };
+      if (t) {
+        h["Authorization"] = "Bearer " + t;
+        const payload = decodeJwtPayload(t);
+        const email = (payload && (payload.email || payload.sub)) || "";
+        if (email) h["X-User-Email"] = email;
+      }
+      // merge extras
+      for (const k in extra) h[k] = extra[k];
+      return h;
+    }
+
+    /* =================== HTTP =================== */
+    async function httpGet(path) {
+      const res = await fetch(API_BASE + "/projects/?mine=1", {
+        method: "GET",
+        mode: "cors",
+        headers: buildAuthHeaders()
+      });
+      if (!res.ok) {
+        let msg = "HTTP " + res.status + " " + res.statusText;
+        try { const d = await res.json(); if (d?.detail) msg = d.detail; } catch {}
+        throw new Error(msg);
+      }
+      return res.json();
+    }
+
+    /* =================== UI refs =================== */
+    var projectsContainer      = document.getElementById("projectsContainer");
+    var colaboradoresContainer = document.getElementById("colaboradoresContainer");
+    var searchInput            = document.getElementById("searchInput");
+    var searchBtn              = document.getElementById("searchBtn");
+    var addMemberBtn           = document.getElementById("addMemberBtn");
+
+    /* ============ meus projetos (usa X-User-Email) ============ */
+    async function listMyProjects() {
+      try {
+        var s = getSession();
+        if (!s || !s.email || !s.token) {
+          projectsContainer.innerHTML =
+            '<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">' +
+            '<p class="text-gray-500 text-center">Faça login para ver seus projetos.</p>' +
+            "</div>";
+          return;
+        }
+        var projects = await httpGet("/projects?mine=1");
+        renderProjects(projects);
+      } catch (e) {
+        console.error(e);
+        projectsContainer.innerHTML =
+          '<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">' +
+          '<p class="text-gray-500 text-center">Erro ao carregar projetos: ' + e.message + "</p>" +
+          "</div>";
+      }
+    }
+
+    function renderProjects(projects) {
+      projectsContainer.innerHTML = "";
+      if (!projects || projects.length === 0) {
+        projectsContainer.innerHTML =
+          '<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">' +
+          '<p class="text-gray-500 text-center">Nenhum projeto. ' +
+          '<a href="../Criar_projeto/criar_projeto.html" class="text-violet-700 hover:underline">Criar primeiro projeto</a></p>' +
+          "</div>";
+        return;
+      }
+      for (var i = 0; i < projects.length; i++) {
+        var p = projects[i];
+        var card = document.createElement("div");
+        card.className = "bg-white rounded-2xl shadow-sm border border-gray-200 p-8";
+        var html = ""
+          + '<div class="flex items-start justify-between mb-4">'
+          +   '<div class="flex-1">'
+          +     '<h3 class="text-xl font-bold text-gray-900 mb-2">' + (p.title || "Sem título") + "</h3>"
+          +     '<p class="text-gray-600 text-sm">' + (p.description || "Sem descrição") + "</p>"
+          +   "</div>"
+          +   '<a href="../visualizar_projeto/pagina_projeto.html?id=' + p.id + '" class="text-violet-700 hover:text-violet-900 font-medium text-sm ml-4">Ver detalhes →</a>'
+          + "</div>";
+        card.innerHTML = html;
+        projectsContainer.appendChild(card);
+      }
+    }
+
+    /* ============ busca mock (mantém placeholder) ============ */
+    async function listColaboradores() {
+      colaboradoresContainer.classList.remove("hidden");
+      colaboradoresContainer.innerHTML =
+        '<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">' +
+        '<p class="text-gray-500 text-center">Mock: aqui entram os colaboradores de outro micro.</p>' +
+        "</div>";
+    }
+    function doSearch() {
+      var q = (searchInput.value || "").trim();
+      if (!q) { colaboradoresContainer.classList.add("hidden"); listMyProjects(); return; }
+      listColaboradores();
+    }
+
+    /* =================== BOOT =================== */
+    document.addEventListener("DOMContentLoaded", function () {
+      ensureSessionFromLegacy();
+      listMyProjects();
+
+      searchBtn.addEventListener("click", doSearch);
+      searchInput.addEventListener("keyup", function (e) { if (e.key === "Enter") doSearch(); });
+      addMemberBtn.addEventListener("click", function () {
+        listColaboradores();
+        colaboradoresContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  </script>
+</body>
+</html>

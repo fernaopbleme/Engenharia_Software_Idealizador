@@ -6,14 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{--bg:#fafafa;--card:#fff;--text:#111;--muted:#666;--border:#e6e6e6;--primary:#4f46e5;--primary-contrast:#fff;--danger:#ef4444;--pill:#f4f4f5;--pill-border:#e4e4e7;--hint-bg:#fff1f2;--hint-text:#9f1239;--success-bg:#ecfdf5;--success-text:#065f46}
+    :root{--bg:#fafafa;--card:#fff;--text:#111;--muted:#666;--border:#e6e6e6;--primary:#4f46e5;--primary-contrast:#fff;--danger:#ef4444;--pill:#f4f4f5;--pill-border:#e4e4e7;--success-bg:#ecfdf5;--success-text:#065f46}
     *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);background:radial-gradient(1200px 800px at 50% -100px,#ffe6ff66,transparent),var(--bg)}
     .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--border)}
     .brand{font-weight:700}
-    .session{display:flex;gap:8px;align-items:center}
-    .session input{padding:8px 10px;border:1px solid var(--border);border-radius:10px}
-    .session .btn{padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer}
-    .session .btn-primary{background:var(--primary);border-color:var(--primary);color:var(--primary-contrast)}
     .container{max-width:920px;margin:28px auto;padding:0 16px}
     .page-title{text-align:center;margin-bottom:18px}
     .page-title h1{margin:8px 0 4px;font-size:24px}.page-title p{margin:0;color:var(--muted)}
@@ -33,20 +29,14 @@
     .empty{display:grid;place-items:center;text-align:center;border-radius:12px;border:1px dashed var(--border);background:#fff7ed;color:#7c2d12;padding:18px;font-size:14px}
     .footer-actions{display:flex;gap:10px;justify-content:center;margin-top:18px}
     .alert{margin-top:12px;padding:10px 12px;border-radius:12px;font-size:14px;border:1px solid transparent;display:none}
-    .alert.error{display:block;background:#fff1f2;color:var(--hint-text);border-color:#ffe4e6}
+    .alert.error{display:block;background:#fff1f2;color:#9f1239;border-color:#ffe4e6}
     .alert.success{display:block;background:var(--success-bg);color:var(--success-text);border-color:#a7f3d0}
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="brand">TeamBuilder</div>
-    <div class="session" id="sessionBox">
-      <input id="emailInput" type="email" placeholder="e-mail" />
-      <input id="passInput" type="password" placeholder="senha" />
-      <button id="loginBtn" class="btn btn-primary">Entrar</button>
-      <button id="logoutBtn" class="btn" style="display:none">Sair</button>
-      <span id="whoami" style="color:#555"></span>
-    </div>
+    <div id="whoami" style="color:#555"></div>
   </header>
 
   <main class="container">
@@ -104,214 +94,256 @@
   </main>
 
   <script>
-    // ====== CONFIG ======
-    const API_BASE  = "https://bdprojetos.azurewebsites.net";         // micro de projetos
-    const AUTH_BASE = "https://SEU-AUTH.azurewebsites.net";            // <<< TROQUE para o micro de login
+    // ========= CONFIG =========
+    var API_BASE = "https://bdprojetos.azurewebsites.net";  // ajuste se necessário
+    var LOGIN_PAGE = "../login/login.html";                        // para redirecionar se não logado
 
-    // ====== AUTH STORE (persistência de sessão) ======
-    const AUTH_KEY = "auth.user"; // { email, token }
-    const authStore = {
-      get(){ try{ return JSON.parse(localStorage.getItem(AUTH_KEY)||"null"); }catch{return null} },
-      set(v){ localStorage.setItem(AUTH_KEY, JSON.stringify(v)); },
-      clear(){ localStorage.removeItem(AUTH_KEY); }
-    };
-    const getEmail = () => authStore.get()?.email || "";
-    const getToken = () => authStore.get()?.token || "";
-
-    // Normaliza possíveis nomes de campos vindos do /login
-    function pickTokenAndEmail(loginResponse, fallbackEmail) {
-      const token = loginResponse.access_token || loginResponse.token || loginResponse.jwt || "";
-      const email = loginResponse.email || loginResponse.user?.email || fallbackEmail || "";
-      return { token, email };
-    }
-
-    // ====== LOGIN / LOGOUT ======
-    async function loginWithPassword(email, password) {
-      const resp = await fetch(`${AUTH_BASE}/login`, {
-        method: "POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      if (!resp.ok) {
-        const err = await resp.json().catch(()=>({}));
-        throw new Error(err.detail || `${resp.status} ${resp.statusText}`);
-      }
-      const data = await resp.json();
-      const { token, email: resolvedEmail } = pickTokenAndEmail(data, email);
-      if (!token) throw new Error("Auth não retornou token");
-
-      // Opcional: confirmar no /me (se existir) para pegar email oficial do token
-      try {
-        const meResp = await fetch(`${AUTH_BASE}/me`, { headers: { Authorization: `Bearer ${token}` } });
-        if (meResp.ok) {
-          const me = await meResp.json();
-          if (me?.email) authStore.set({ token, email: me.email });
-          else authStore.set({ token, email: resolvedEmail });
-        } else {
-          authStore.set({ token, email: resolvedEmail });
-        }
-      } catch {
-        authStore.set({ token, email: resolvedEmail });
-      }
-      paintSession();
-    }
-
-    function logout(){ authStore.clear(); paintSession(); }
-
-    // ====== UI Sessão ======
-    const emailInput = document.getElementById("emailInput");
-    const passInput  = document.getElementById("passInput");
-    const loginBtn   = document.getElementById("loginBtn");
-    const logoutBtn  = document.getElementById("logoutBtn");
-    const whoami     = document.getElementById("whoami");
-
-    loginBtn.onclick = async ()=> {
-      loginBtn.disabled = true;
+    // ========= JWT / SESSÃO =========
+    function decodeJwtPayload(token){
       try{
-        await loginWithPassword(emailInput.value.trim(), passInput.value);
-      }catch(e){ alert(e.message||"Erro ao entrar"); }
-      finally{ loginBtn.disabled = false; }
-    };
-    logoutBtn.onclick = ()=> logout();
-
-    function paintSession(){
-      const email = getEmail();
-      const logged = !!getToken();
-      emailInput.style.display = logged ? "none" : "";
-      passInput.style.display  = logged ? "none" : "";
-      loginBtn.style.display   = logged ? "none" : "";
-      logoutBtn.style.display  = logged ? "" : "none";
-      whoami.textContent = logged ? `Olá, ${email}` : "";
-    }
-    paintSession();
-
-    // ====== NÍVEIS ======
-    const LEVEL_UI_TO_API = { BEGINNER:"beginner", INTERMEDIATE:"intermediate", ADVANCED:"advanced" };
-
-    // ====== ESTADO LOCAL ======
-    const skills = [];
-    const knownTags = [];
-
-    // ====== UI refs ======
-    const skillsList = document.getElementById('skillsList');
-    const skillsEmpty = document.getElementById('skillsEmpty');
-    const addSkillBtn = document.getElementById('addSkillBtn');
-    const skillName = document.getElementById('skillName');
-    const skillLevel = document.getElementById('skillLevel');
-    const form = document.getElementById('projectForm');
-    const alertBox = document.getElementById('formAlert');
-    const cancelBtn = document.getElementById('cancelBtn');
-
-    function showAlert(type,msg){ alertBox.className='alert '+type; alertBox.textContent=msg; }
-    function clearAlert(){ alertBox.className='alert'; alertBox.textContent=''; }
-
-    function renderSkills(){
-      skillsList.innerHTML='';
-      if(!skills.length){ skillsEmpty.style.display='grid'; return; }
-      skillsEmpty.style.display='none';
-      skills.forEach((s,idx)=>{
-        const row=document.createElement('div'); row.className='skill-item';
-        const meta=document.createElement('div'); meta.className='meta';
-        const name=document.createElement('strong'); name.textContent=s.name;
-        const level=document.createElement('span'); level.className='chip';
-        level.textContent = s.level==='BEGINNER'?'Iniciante':(s.level==='ADVANCED'?'Avançado':'Intermediário');
-        meta.appendChild(name); meta.appendChild(level);
-        const remove=document.createElement('button'); remove.type='button'; remove.className='btn btn-danger'; remove.textContent='Remover';
-        remove.onclick=()=>{ skills.splice(idx,1); renderSkills(); };
-        row.appendChild(meta); row.appendChild(remove); skillsList.appendChild(row);
-      });
+        var parts = token.split(".");
+        if (parts.length < 2) return null;
+        var b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+        while (b64.length % 4 !== 0) b64 += "=";
+        var json = decodeURIComponent(atob(b64).split("").map(function(c){
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(""));
+        return JSON.parse(json);
+      }catch(e){ return null; }
     }
 
-    // ====== HTTP helper (inclui Bearer + X-User-Email) ======
-    async function http(path, init={}){
-      const headers = { "Content-Type":"application/json", ...(init.headers||{}) };
-      const email = getEmail();
-      const token = getToken();
-      if(email) headers["X-User-Email"] = email;
-      if(token) headers["Authorization"] = `Bearer ${token}`;
+    function getToken(){
+      // token salvo pela página de login
+      return localStorage.getItem("access_token") || null;
+    }
 
-      const res = await fetch(API_BASE+path, { ...init, headers });
-      if(!res.ok){
-        let msg = res.status+" "+res.statusText;
-        try{ const d = await res.json(); if(d?.detail) msg=d.detail; }catch{}
+    function getEmailFromToken(token){
+      var p = decodeJwtPayload(token);
+      if (!p) return null;
+      return p.email || p.sub || null;
+    }
+
+    function buildAuthHeaders(extra){
+      if (!extra) extra = {};
+      var t = getToken();
+      if (!t) return extra; // será barrado no guard
+      var email = getEmailFromToken(t) || "";
+      var h = { "Content-Type": "application/json" };
+      h["Authorization"] = "Bearer " + t;
+      if (email) h["X-User-Email"] = email;
+      // mescla extras
+      for (var k in extra) { h[k] = extra[k]; }
+      return h;
+    }
+
+    function requireLogged(){
+      var t = getToken();
+      if (!t){
+        window.location.href = LOGIN_PAGE;
+        return false;
+      }
+      var who = document.getElementById("whoami");
+      var email = getEmailFromToken(t);
+      if (who && email) who.textContent = "Olá, " + email;
+      return true;
+    }
+
+    // ========= HTTP HELPERS =========
+    async function http(path, init){
+      var res = await fetch(API_BASE + path, init);
+      if (!res.ok){
+        var msg = "HTTP " + res.status + " " + res.statusText;
+        try { var d = await res.json(); if (d && d.detail) msg = d.detail; } catch(e){}
         throw new Error(msg);
       }
-      const text = await res.text();
-      return text ? JSON.parse(text) : null;
+      var txt = await res.text();
+      return txt ? JSON.parse(txt) : null;
     }
 
-    const api = {
-      listTags: (q)=> http('/tags/'+(q?('?q='+encodeURIComponent(q)):'') ),
-      createTag: (body)=> http('/tags/', { method:'POST', body:JSON.stringify(body) }),
-      createProj: (body)=> http('/projects/', { method:'POST', body:JSON.stringify(body) })
-    };
+    async function httpAuthed(path, init){
+      init = init || {};
+      init.headers = buildAuthHeaders(init.headers || {});
+      return http(path, init);
+    }
 
-    // ====== Regras de tags ======
+    // ========= TAGS (garantir id) =========
+    async function listTags(q){
+      var url = "/tags/";
+      if (q && q.trim()){
+        url = "/tags/?q=" + encodeURIComponent(q.trim());
+      }
+      return httpAuthed(url, { method: "GET" });
+    }
+
+    async function createTag(body){
+      return httpAuthed("/tags/", {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+    }
+
     async function ensureTagIdByName(name){
-      const nm=(name||'').trim(); if(!nm) throw new Error('Nome da habilidade vazio');
-      const lower = nm.toLowerCase();
-      let t = knownTags.find(x=>x.name.toLowerCase()===lower);
-      if(!t){
-        const found = await api.listTags(nm);
-        t = found.find(x=>x.name.toLowerCase()===lower);
+      var nm = (name || "").trim();
+      if (!nm) throw new Error("Nome da habilidade vazio.");
+      var all = await listTags(nm);
+      var lower = nm.toLowerCase();
+      var hit = null;
+      if (Array.isArray(all)){
+        for (var i=0;i<all.length;i++){
+          if ((all[i].name || "").toLowerCase() === lower){ hit = all[i]; break; }
+        }
       }
-      if(!t){
-        t = await api.createTag({ name:nm });
-        knownTags.push(t);
-      }
-      return t.id;
+      if (!hit) hit = await createTag({ name: nm });
+      return hit.id;
     }
 
-    // ====== Criar projeto ======
-    async function createProjectFromUI({ title, description, category, uiSkills }) {
-      const links = [];
-      for (const s of uiSkills) {
-        const tag_id = await ensureTagIdByName(s.name);
-        const skill_level = LEVEL_UI_TO_API[s.level] || 'intermediate';
-        const i = links.findIndex(l => l.tag_id === tag_id);
-        if (i >= 0) links[i].skill_level = skill_level; else links.push({ tag_id, skill_level });
-      }
-      const payload = { title, description, category, tags: links };
-      return api.createProj(payload);
+    // ========= PROJETOS =========
+    var LEVEL_UI_TO_API = { BEGINNER:"beginner", INTERMEDIATE:"intermediate", ADVANCED:"advanced" };
+
+    async function createProject(payload){
+      return httpAuthed("/projects/", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
     }
 
-    // ====== Eventos ======
-    addSkillBtn.onclick = ()=>{
-      clearAlert();
-      const name=(skillName.value||'').trim();
-      if(!name) return showAlert('error','Informe o nome da habilidade antes de adicionar.');
-      if(skills.some(s=>s.name.toLowerCase()===name.toLowerCase()))
-        return showAlert('error','Essa habilidade já foi adicionada.');
-      skills.push({ name, level: skillLevel.value });
-      skillName.value=''; renderSkills();
-    };
-
-    cancelBtn.onclick = ()=>{ if(document.referrer) history.back(); else window.location.href='/'; };
-
-    form.addEventListener('submit', async (e)=>{
-      e.preventDefault(); clearAlert();
-      if(!getEmail() || !getToken()) return showAlert('error','Você precisa entrar antes de criar o projeto.');
-
-      const title=document.getElementById('title').value.trim();
-      const description=document.getElementById('description').value.trim();
-      const category=document.getElementById('category').value.trim();
-      if(!title) return showAlert('error','O título do projeto é obrigatório.');
-      if(!description) return showAlert('error','A descrição do projeto é obrigatória.');
-      if(!category) return showAlert('error','A categoria do projeto é obrigatória.');
-
-      try{
-        await createProjectFromUI({ title, description, category, uiSkills: skills });
-        showAlert('success','Projeto criado com sucesso!');
-        document.getElementById('title').value='';
-        document.getElementById('description').value='';
-        document.getElementById('category').value='';
-        skills.length=0; renderSkills();
-      }catch(err){
-        showAlert('error','Falha ao criar o projeto. '+(err.message||''));
+    async function createProjectFromUI(title, description, category, uiSkills){
+      var links = []; // { tag_id, skill_level }
+      for (var i=0;i<uiSkills.length;i++){
+        var s = uiSkills[i];
+        var tagId = await ensureTagIdByName(s.name);
+        var lvl = LEVEL_UI_TO_API[s.level] || "intermediate";
+        // evita duplicar tag
+        var idx = -1;
+        for (var j=0;j<links.length;j++){ if (links[j].tag_id === tagId){ idx = j; break; } }
+        if (idx >= 0) links[idx].skill_level = lvl;
+        else links.push({ tag_id: tagId, skill_level: lvl });
       }
+      var body = { title: title, description: description, category: category, tags: links };
+      return createProject(body);
+    }
+
+    // ========= UI / ESTADO =========
+    var skills = []; // { name, level }
+
+    var $ = function(id){ return document.getElementById(id); };
+    var skillsList  = $("skillsList");
+    var skillsEmpty = $("skillsEmpty");
+    var addSkillBtn = $("addSkillBtn");
+    var skillName   = $("skillName");
+    var skillLevel  = $("skillLevel");
+    var form        = $("projectForm");
+    var alertBox    = $("formAlert");
+    var cancelBtn   = $("cancelBtn");
+
+    function showAlert(type, msg){
+      alertBox.className = "alert " + type;
+      alertBox.textContent = msg;
+    }
+    function clearAlert(){
+      alertBox.className = "alert";
+      alertBox.textContent = "";
+    }
+
+    function renderSkills(){
+      skillsList.innerHTML = "";
+      if (skills.length === 0){
+        skillsEmpty.style.display = "grid";
+        return;
+      }
+      skillsEmpty.style.display = "none";
+      for (var i=0;i<skills.length;i++){
+        (function(idx){
+          var s = skills[idx];
+          var row = document.createElement("div");
+          row.className = "skill-item";
+
+          var meta = document.createElement("div");
+          meta.className = "meta";
+
+          var nameEl = document.createElement("strong");
+          nameEl.textContent = s.name;
+
+          var levelEl = document.createElement("span");
+          levelEl.className = "chip";
+          levelEl.textContent = (s.level === "BEGINNER") ? "Iniciante" :
+                                 (s.level === "ADVANCED") ? "Avançado" : "Intermediário";
+
+          meta.appendChild(nameEl);
+          meta.appendChild(levelEl);
+
+          var rem = document.createElement("button");
+          rem.type = "button";
+          rem.className = "btn btn-danger";
+          rem.textContent = "Remover";
+          rem.onclick = function(){
+            skills.splice(idx, 1);
+            renderSkills();
+          };
+
+          row.appendChild(meta);
+          row.appendChild(rem);
+          skillsList.appendChild(row);
+        })(i);
+      }
+    }
+
+    // ========= Eventos =========
+    document.addEventListener("DOMContentLoaded", function(){
+      if (!requireLogged()) return;
+
+      var email = getEmailFromToken(getToken());
+      var who = document.getElementById("whoami");
+      if (who && email) who.textContent = "Olá, " + email;
+
+      addSkillBtn.addEventListener("click", function(){
+        clearAlert();
+        var nm = (skillName.value || "").trim();
+        if (!nm){ showAlert("error", "Informe o nome da habilidade antes de adicionar."); return; }
+        var exists = false;
+        for (var i=0;i<skills.length;i++){
+          if (skills[i].name.toLowerCase() === nm.toLowerCase()){ exists = true; break; }
+        }
+        if (exists){ showAlert("error", "Essa habilidade já foi adicionada."); return; }
+        var lvl = skillLevel.value || "INTERMEDIATE";
+        skills.push({ name: nm, level: lvl });
+        skillName.value = "";
+        renderSkills();
+      });
+
+      cancelBtn.addEventListener("click", function(){
+        if (document.referrer) history.back();
+        else window.location.href = "../home/home.html";
+      });
+
+      form.addEventListener("submit", function(e){
+        e.preventDefault();
+        clearAlert();
+
+        var title = $("title").value.trim();
+        var description = $("description").value.trim();
+        var category = $("category").value.trim();
+
+        if (!title){ showAlert("error", "O título do projeto é obrigatório."); return; }
+        if (!description){ showAlert("error", "A descrição do projeto é obrigatória."); return; }
+        if (!category){ showAlert("error", "A categoria do projeto é obrigatória."); return; }
+
+        createProjectFromUI(title, description, category, skills)
+          .then(function(){
+            showAlert("success", "Projeto criado com sucesso!");
+            $("title").value = "";
+            $("description").value = "";
+            $("category").value = "";
+            skills = [];
+            renderSkills();
+          })
+          .catch(function(err){
+            showAlert("error", "Falha ao criar o projeto. " + (err && err.message ? err.message : ""));
+          });
+      });
+
+      renderSkills();
     });
-
-    renderSkills();
   </script>
 </body>
 </html>
