@@ -1,238 +1,274 @@
-const API_BASE = "http://localhost:8000";
+const API_PROJETOS_BASE = "https://bdprojetos.azurewebsites.net";
+const API_COLABORADORES_BASE = "http://localhost:8002"; // API de colaboradores
+const AUTH_KEY = "auth.user";
+
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 const projectsContainer = document.getElementById("projectsContainer");
 const colaboradoresContainer = document.getElementById("colaboradoresContainer");
 const addMemberBtn = document.getElementById("addMemberBtn");
 
-// Mapeamento de níveis para português
 const levelNames = {
-  "beginner": "Iniciante",
-  "intermediate": "Intermediário",
-  "advanced": "Avançado"
+  beginner: "Iniciante",
+  intermediate: "Intermediário",
+  advanced: "Avançado",
 };
 
-async function listProjects() {
+function obterSessao() {
   try {
-    const res = await fetch(`${API_BASE}/projects`, {
-      headers: { "Content-Type": "application/json" }
-    });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const projects = await res.json();
-    await renderProjects(projects);
-  } catch (e) {
-    console.error("Erro ao carregar projetos:", e);
-    projectsContainer.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <p class="text-gray-500 text-center">Erro ao carregar projetos. Verifique se a API mock está rodando.</p>
-      </div>
-    `;
+    return JSON.parse(localStorage.getItem(AUTH_KEY) || "null");
+  } catch {
+    return null;
   }
 }
 
-async function renderProjects(projects) {
-  projectsContainer.innerHTML = "";
-  if (!projects || projects.length === 0) {
-    projectsContainer.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <p class="text-gray-500 text-center">Nenhum projeto encontrado. <a href="criar_projeto.html" class="text-violet-700 hover:underline">Criar primeiro projeto</a></p>
-      </div>
-    `;
-    return;
-  }
-  
-  
-  for (const project of projects) {
-    await renderProjectCard(project);
-  }
-}
-
-async function renderProjectCard(project) {
-  const card = document.createElement("div");
-  card.className = "bg-white rounded-2xl shadow-sm border border-gray-200 p-8";
-
-  // Buscar colaboradores inscritos no projeto
-  let colaboradores = [];
-  try {
-    const res = await fetch(`${API_BASE}/colaboradores/inscritos/${project.id}`);
-    if (res.ok) {
-      const data = await res.json();
-      colaboradores = data.colaboradores || [];
-    }
-  } catch (e) {
-    console.error(`Erro ao buscar colaboradores ${project.id}:`, e);
-  }
-
-  // Renderizar colaboradores inscritos
-  const colaboradoresHtml = colaboradores.length > 0 ? `
-    <div class="mt-4 flex flex-wrap gap-4">
-      ${colaboradores.map(colab => {
-        const habilidadePrincipal = colab.skills && colab.skills.length > 0 
-          ? colab.skills[0] 
-          : null;
-        return `
-        <div class="flex flex-col items-center">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-semibold text-lg shadow-md hover:scale-110 transition-transform cursor-pointer">
-            ${colab.nome.charAt(0).toUpperCase()}
-          </div>
-          <div class="mt-2 text-center">
-            <p class="font-semibold text-gray-900 text-xs truncate max-w-[80px]">${colab.nome}</p>
-            ${habilidadePrincipal ? `
-              <p class="text-xs text-gray-600 mt-0.5 truncate max-w-[80px]">
-                ${habilidadePrincipal.nome}
-              </p>
-            ` : ''}
-          </div>
-        </div>
-      `;
-      }).join("")}
+function mostrarMensagem(container, mensagem) {
+  container.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+      <p class="text-gray-500 text-center">${mensagem}</p>
     </div>
-  ` : '';
-
-  card.innerHTML = `
-    <div class="flex items-start justify-between mb-4">
-      <div class="flex-1">
-        <h3 class="text-xl font-bold text-gray-900 mb-2">${project.title || "Sem título"}</h3>
-        <p class="text-gray-600 text-sm">${project.description || "Sem descrição"}</p>
-      </div>
-      <a href="pagina_projeto.html?id=${project.id}" class="text-violet-700 hover:text-violet-900 font-medium text-sm ml-4">
-        Ver detalhes →
-      </a>
-    </div>
-    ${colaboradoresHtml}
   `;
-
-  projectsContainer.appendChild(card);
 }
 
-async function listColaboradores() {
-  try {
-    const res = await fetch(`${API_BASE}/colaboradores`, {
-      headers: { "Content-Type": "application/json" }
-    });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const colaboradores = await res.json();
-    renderColaboradores(colaboradores);
-  } catch (e) {
-    console.error("Erro ao carregar colaboradores:", e);
-    colaboradoresContainer.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <p class="text-gray-500 text-center">Erro ao carregar colaboradores. Verifique se a API mock está rodando.</p>
-      </div>
-    `;
+function construirCabecalhosProjetos() {
+  const sessao = obterSessao();
+  const headers = { "Content-Type": "application/json" };
+
+  if (sessao?.email) {
+    headers["X-User-Email"] = sessao.email;
   }
-}
-
-async function searchColaboradores(query) {
-  try {
-    const res = await fetch(`${API_BASE}/colaboradores`, {
-      headers: { "Content-Type": "application/json" }
-    });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const colaboradores = await res.json();
-    
-    // Filtrar colaboradores por habilidades que correspondem à busca
-    const queryLower = query.toLowerCase();
-    const filtered = colaboradores.filter(colab => {
-      // Buscar por nome, email, cargo ou habilidades
-      const nomeMatch = colab.nome.toLowerCase().includes(queryLower);
-      const emailMatch = colab.email.toLowerCase().includes(queryLower);
-      const cargoMatch = colab.cargo.toLowerCase().includes(queryLower);
-      const habilidadesMatch = colab.skills.some(habilidade => 
-        habilidade.nome.toLowerCase().includes(queryLower)
-      );
-      
-      return nomeMatch || emailMatch || cargoMatch || habilidadesMatch;
-    });
-    
-    renderColaboradores(filtered, query);
-  } catch (e) {
-    console.error("Erro ao buscar colaboradores:", e);
-    colaboradoresContainer.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <p class="text-gray-500 text-center">Erro ao buscar colaboradores. Verifique se a API mock está rodando.</p>
-      </div>
-    `;
+  if (sessao?.token) {
+    headers["Authorization"] = `Bearer ${sessao.token}`;
   }
+
+  return headers;
 }
 
-function renderColaboradores(colaboradores, searchQuery = null) {
-  colaboradoresContainer.classList.remove("hidden");
-  colaboradoresContainer.innerHTML = "";
-  
-  if (!colaboradores || colaboradores.length === 0) {
-    colaboradoresContainer.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <p class="text-gray-500 text-center">
-          ${searchQuery ? `Nenhum colaborador encontrado para "${searchQuery}".` : "Nenhum colaborador encontrado."}
-        </p>
-      </div>
-    `;
+async function carregarProjetos() {
+  const sessao = obterSessao();
+  if (!sessao || !sessao.email) {
+    mostrarMensagem(projectsContainer, "Faça login para ver seus projetos.");
     return;
   }
 
-  const title = searchQuery 
-    ? `<h3 class="text-xl font-bold text-gray-900 mb-6">Resultados para "${searchQuery}" (${colaboradores.length})</h3>`
-    : `<h3 class="text-xl font-bold text-gray-900 mb-6">Todos os Colaboradores (${colaboradores.length})</h3>`;
+  try {
+    const resposta = await fetch(`${API_PROJETOS_BASE}/projects?mine=1`, {
+      headers: construirCabecalhosProjetos(),
+    });
+
+    if (!resposta.ok) {
+      let mensagem = `Erro ${resposta.status}`;
+      try {
+        const detalhe = await resposta.json();
+        if (detalhe?.detail) mensagem = detalhe.detail;
+      } catch {
+        // ignorar parsing
+      }
+      throw new Error(mensagem);
+    }
+
+    const projetos = await resposta.json();
+    renderizarProjetos(projetos);
+  } catch (error) {
+    console.error(error);
+    mostrarMensagem(projectsContainer, "Erro ao carregar projetos.");
+  }
+}
+
+function renderizarProjetos(projects) {
+  projectsContainer.innerHTML = "";
+
+  if (!projects?.length) {
+    mostrarMensagem(
+      projectsContainer,
+      `Nenhum projeto encontrado. <a href="criar_projeto.html" class="text-violet-700 hover:underline">Criar primeiro projeto</a>`
+    );
+    return;
+  }
+
+  projects.forEach(async (project) => {
+    const card = document.createElement("div");
+    card.className = "bg-white rounded-2xl shadow-sm border border-gray-200 p-8";
+
+    card.innerHTML = `
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex-1">
+          <h3 class="text-xl font-bold text-gray-900 mb-2">${project.title || "Sem título"}</h3>
+          <p class="text-gray-600 text-sm">${project.description || "Sem descrição"}</p>
+        </div>
+        <a href="pagina_projeto.html?id=${project.id}" class="text-violet-700 hover:text-violet-900 font-medium text-sm ml-4">
+          Ver detalhes →
+        </a>
+      </div>
+      <button type="button" class="botao-colaboradores bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-violet-800 transition">
+        Ver colaboradores
+      </button>
+      <div class="colaboradores mt-4"></div>
+    `;
+
+    projectsContainer.appendChild(card);
+
+    const botao = card.querySelector(".botao-colaboradores");
+    const containerColaboradores = card.querySelector(".colaboradores");
+
+    botao.addEventListener("click", async () => {
+      botao.disabled = true;
+      const textoOriginal = botao.textContent;
+      botao.textContent = "Carregando...";
+
+      await carregarColaboradoresDoProjeto(project.id, containerColaboradores);
+
+      botao.textContent = textoOriginal;
+      botao.disabled = false;
+    });
+  });
+}
+
+async function carregarColaboradoresDoProjeto(projectId, container) {
+  try {
+    const res = await fetch(`${API_COLABORADORES_BASE}/colaboradores/inscritos/${projectId}`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const colaboradores = data.colaboradores || [];
+
+    if (!colaboradores.length) {
+      container.innerHTML = "";
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="mt-4 flex flex-wrap gap-4">
+        ${colaboradores
+          .map((colab) => {
+            const skill =
+              colab.skills && colab.skills.length
+                ? `${colab.skills[0].nome} - ${levelNames[colab.skills[0].nivel] || colab.skills[0].nivel}`
+                : "Sem habilidades cadastradas";
+            return `
+              <div class="bg-gray-50 rounded-xl px-4 py-3 shadow-sm">
+                <p class="font-semibold text-gray-900 text-sm">${colab.nome}</p>
+                <p class="text-xs text-gray-600">${skill}</p>
+              </div>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
+  } catch (error) {
+    console.error(error);
+    container.innerHTML = `<p class="text-sm text-gray-500 mt-4">Não foi possível carregar os colaboradores.</p>`;
+  }
+}
+
+async function listarColaboradores() {
+  try {
+    const res = await fetch(`${API_COLABORADORES_BASE}/colaboradores`);
+    if (!res.ok) throw new Error();
+    const colaboradores = await res.json();
+    renderizarColaboradores(colaboradores);
+  } catch (error) {
+    console.error(error);
+    mostrarMensagem(colaboradoresContainer, "Erro ao carregar colaboradores.");
+  }
+}
+
+async function buscarColaboradores(termoBusca) {
+  const termo = termoBusca.trim().toLowerCase();
+  if (!termo) {
+    colaboradoresContainer.classList.add("hidden");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_COLABORADORES_BASE}/colaboradores`);
+    if (!res.ok) throw new Error();
+    const colaboradores = await res.json();
+
+    const filtrados = colaboradores.filter((colab) => {
+      const base = `${colab.nome} ${colab.email} ${colab.cargo}`.toLowerCase();
+      const skills = (colab.skills || []).map((s) => s.nome.toLowerCase());
+      return base.includes(termo) || skills.some((skill) => skill.includes(termo));
+    });
+
+    renderizarColaboradores(filtrados, termoBusca);
+  } catch (error) {
+    console.error(error);
+    mostrarMensagem(colaboradoresContainer, "Erro ao buscar colaboradores.");
+  }
+}
+
+function renderizarColaboradores(colaboradores, termoBusca) {
+  colaboradoresContainer.classList.remove("hidden");
+
+  if (!colaboradores.length) {
+    mostrarMensagem(
+      colaboradoresContainer,
+      termoBusca
+        ? `Nenhum colaborador encontrado para "${termoBusca}".`
+        : "Nenhum colaborador cadastrado."
+    );
+    return;
+  }
 
   colaboradoresContainer.innerHTML = `
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-      ${title}
+      <h3 class="text-xl font-bold text-gray-900 mb-6">
+        ${
+          termoBusca
+            ? `Resultados para "${termoBusca}"`
+            : `Todos os colaboradores (${colaboradores.length})`
+        }
+      </h3>
       <div class="space-y-4">
-        ${colaboradores.map(colab => `
-          <div class="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex-1">
-                <h4 class="text-lg font-semibold text-gray-900 mb-1">${colab.nome}</h4>
-                <p class="text-sm text-gray-600 mb-1">${colab.cargo}</p>
+        ${colaboradores
+          .map(
+            (colab) => `
+              <div class="border border-gray-200 rounded-lg p-6">
+                <h4 class="text-lg font-semibold text-gray-900">${colab.nome}</h4>
+                <p class="text-sm text-gray-600">${colab.cargo}</p>
                 <p class="text-xs text-gray-500 mb-2">${colab.email}</p>
-                ${colab.level ? `
-                  <span class="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium mb-3">
-                    Nível: ${levelNames[colab.level] || colab.level}
-                  </span>
-                ` : ""}
+                <div class="flex flex-wrap gap-2 mt-3">
+                  ${
+                    colab.skills?.length
+                      ? colab.skills
+                          .map(
+                            (skill) => `
+                              <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                                ${skill.nome} - ${levelNames[skill.nivel] || skill.nivel}
+                              </span>
+                            `
+                          )
+                          .join("")
+                      : '<span class="text-gray-400 text-xs">Nenhuma habilidade registrada.</span>'
+                  }
+                </div>
               </div>
-            </div>
-            <div class="mt-4">
-              <p class="text-sm font-medium text-gray-700 mb-2">Habilidades:</p>
-              <div class="flex flex-wrap gap-2">
-                ${colab.skills && colab.skills.length > 0 ? colab.skills.map(habilidade => `
-                  <span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
-                    ${habilidade.nome} - ${levelNames[habilidade.nivel] || habilidade.nivel}
-                  </span>
-                `).join("") : '<span class="text-gray-400 text-xs">Nenhuma habilidade cadastrada</span>'}
-              </div>
-            </div>
-          </div>
-        `).join("")}
+            `
+          )
+          .join("")}
       </div>
     </div>
   `;
 }
 
-function doSearch() {
-  const q = searchInput.value.trim();
-  if (!q) {
+function lidarComBusca() {
+  const value = searchInput.value;
+  if (!value.trim()) {
     colaboradoresContainer.classList.add("hidden");
-    listProjects();
     return;
   }
-  
-  // Buscar colaboradores
-  searchColaboradores(q);
+  buscarColaboradores(value);
 }
 
-// Event Listeners
-searchBtn.addEventListener("click", doSearch);
-searchInput.addEventListener("keyup", (e) => { if (e.key === "Enter") doSearch(); });
-
-addMemberBtn.addEventListener("click", () => {
-  // Mostrar todos os colaboradores ao clicar em adicionar
-  listColaboradores();
-  // Rolar até a seção de colaboradores
-  colaboradoresContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+document.addEventListener("DOMContentLoaded", () => {
+  carregarProjetos();
+  searchBtn.addEventListener("click", lidarComBusca);
+  searchInput.addEventListener("keyup", (event) => {
+    if (event.key === "Enter") lidarComBusca();
+  });
+  addMemberBtn.addEventListener("click", () => {
+    listarColaboradores();
+    colaboradoresContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 });
-
-// Carregar projetos ao carregar a página
-listProjects();
 
