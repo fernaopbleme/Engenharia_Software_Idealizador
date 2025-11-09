@@ -57,7 +57,7 @@
   <script>
     /* ===================== CONFIG ===================== */
     var API_BASE = "https://bdprojetos.azurewebsites.net";
-    var AUTH_KEY = "auth.user";             // { email, token }
+    var AUTH_KEY = "auth.user";          // { email, token }
     var LEGACY_TOKEN_KEY = "access_token";  // salvo pelo Login
 
     /* =================== SESSÃO =================== */
@@ -126,6 +126,121 @@
     var searchBtn              = document.getElementById("searchBtn");
     var addMemberBtn           = document.getElementById("addMemberBtn");
 
+    
+    /* ======================================================= */
+    /* ============= NOVAS FUNÇÕES PARA A IA ================= */
+    /* ======================================================= */
+
+    /**
+     * Renderiza as sugestões da IA dentro do card do projeto.
+     */
+    function renderSuggestions(projectId, suggestions) {
+      // 1. Encontra o card correto
+      var card = document.getElementById("project-card-" + projectId);
+      if (!card) {
+        console.error("Não foi possível encontrar o card do projeto para renderizar sugestões.");
+        return;
+      }
+
+      // 2. Remove sugestões antigas, se existirem
+      var oldContainer = card.querySelector(".suggestions-container");
+      if (oldContainer) {
+        oldContainer.remove();
+      }
+      
+      // 3. Se não houver novas sugestões, para aqui
+      if (!suggestions || suggestions.length === 0) {
+        return;
+      }
+
+      // 4. Cria o novo container
+      var suggestionsContainer = document.createElement("div");
+      suggestionsContainer.className = "suggestions-container mt-6 border-t border-gray-200 pt-6"; 
+
+      // 5. Gera o HTML para cada sugestão
+      var suggestionsHtml = suggestions.map(function(sugestao) {
+        return (
+          '<div class="border border-gray-100 bg-gray-50 p-4 rounded-lg">' +
+            '<h4 class="text-md font-bold text-gray-900 mb-1">' + sugestao.perfil_sugerido + '</h4>' +
+            '<p class="text-sm text-gray-600">' + sugestao.justificativa + '</p>' +
+          '</div>'
+        );
+      }).join("");
+
+      // 6. Define o HTML final do container
+      suggestionsContainer.innerHTML = 
+        '<h3 class="text-lg font-semibold text-violet-700 mb-4">Sugestões para seu Projeto:</h3>' +
+        '<div class="space-y-4">' +
+          suggestionsHtml +
+        '</div>';
+
+      // 7. Adiciona o container ao card
+      card.appendChild(suggestionsContainer);
+    }
+
+    /**
+     * Envia os dados do projeto para o microserviço de IA.
+     */
+    async function sendProjectToMicroservice(project, buttonElement) {
+      
+      // NOTA: 'participantes' está vazio porque esta página não busca 
+      // os colaboradores de cada projeto. A IA deve funcionar 
+      // com base na descrição e título.
+      var payload = {
+        "id_projeto": project.id,
+        "descricao_projeto": project.description,
+        "categoria_projeto": project.categoria || project.title, // Usa 'categoria' se existir, senão 'title'
+        "participantes": [] // Array vazio
+      };
+
+      console.log("JSON a ser enviado para IA:", JSON.stringify(payload, null, 2));
+
+      // URL do microserviço de IA
+      var MICROSERVICE_URL = "https://iaidealizador.azurewebsites.net/api/v1/projetos/sugestoes"; 
+
+      try {
+        var res = await fetch(MICROSERVICE_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+            // Nota: Não estamos enviando 'Authorization' para este serviço externo
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          var errorText = await res.text();
+          throw new Error("HTTP " + res.status + " - " + errorText);
+        }
+
+        var responseData = await res.json();
+        console.log("Sucesso! Resposta do microserviço:", responseData);
+
+        // Renderiza as sugestões recebidas
+        if (responseData.sugestoes && responseData.sugestoes.length > 0) {
+          renderSuggestions(project.id, responseData.sugestoes);
+        } else {
+          // Limpa sugestões antigas se a resposta vier vazia
+          renderSuggestions(project.id, []); 
+        }
+
+      } catch (e) {
+        console.error("Erro ao enviar para o microserviço de IA:", e);
+        alert("Erro ao gerar sugestões para '" + project.title + "'. Verifique o console.");
+      } finally {
+        // Restaura o botão
+        if (buttonElement) {
+          buttonElement.textContent = "Gerar Sugestões";
+          buttonElement.disabled = false;
+        }
+      }
+    }
+
+    /* ======================================================= */
+    /* ============= FUNÇÕES EXISTENTES MODIFICADAS ============ */
+    /* ======================================================= */
+
+
     /* ============ meus projetos (usa X-User-Email) ============ */
     async function listMyProjects() {
       try {
@@ -138,7 +253,7 @@
           return;
         }
         var projects = await httpGet("/projects?mine=1");
-        renderProjects(projects);
+        renderProjects(projects); // <--- FUNÇÃO MODIFICADA ESTÁ AQUI
       } catch (e) {
         console.error(e);
         projectsContainer.innerHTML =
@@ -148,6 +263,10 @@
       }
     }
 
+    /**
+     * FUNÇÃO MODIFICADA
+     * Adiciona o botão "Gerar Sugestões" e seu listener.
+     */
     function renderProjects(projects) {
       projectsContainer.innerHTML = "";
       if (!projects || projects.length === 0) {
@@ -158,20 +277,50 @@
           "</div>";
         return;
       }
+
+      // Loop pelos projetos
       for (var i = 0; i < projects.length; i++) {
-        var p = projects[i];
+        var p = projects[i]; // 'p' é o objeto do projeto atual
         var card = document.createElement("div");
         card.className = "bg-white rounded-2xl shadow-sm border border-gray-200 p-8";
+        
+        // *** MUDANÇA: Adiciona um ID único ao card ***
+        card.id = "project-card-" + p.id;
+        
+        // *** MUDANÇA: Adiciona o novo botão ao HTML ***
         var html = ""
           + '<div class="flex items-start justify-between mb-4">'
           +   '<div class="flex-1">'
           +     '<h3 class="text-xl font-bold text-gray-900 mb-2">' + (p.title || "Sem título") + "</h3>"
           +     '<p class="text-gray-600 text-sm">' + (p.description || "Sem descrição") + "</p>"
           +   "</div>"
-          +   '<a href="../visualizar_projeto/pagina_projeto.html?id=' + p.id + '" class="text-violet-700 hover:text-violet-900 font-medium text-sm ml-4">Ver detalhes →</a>'
+          // Wrapper para os botões
+          +   '<div class="flex items-center gap-4 ml-4 flex-shrink-0">'
+          +     '<a href="../visualizar_projeto/pagina_projeto.html?id=' + p.id + '" class="text-violet-700 hover:text-violet-900 font-medium text-sm">Ver detalhes →</a>'
+          // *** ESTE É O NOVO BOTÃO ***
+          +     '<button class="send-microservice-btn bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Gerar Sugestões</button>'
+          +   '</div>' 
           + "</div>";
+
         card.innerHTML = html;
         projectsContainer.appendChild(card);
+
+        // *** MUDANÇA: Adiciona o listener para o botão que acabamos de criar ***
+        var sendBtn = card.querySelector(".send-microservice-btn");
+        if (sendBtn) {
+            // Usamos uma IIFE (Immediately Invoked Function Expression)
+            // para "capturar" o valor correto de 'p' dentro do loop.
+            (function(currentProject) { 
+                sendBtn.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    var btn = e.target;
+                    btn.textContent = "Carregando...";
+                    btn.disabled = true;
+                    // 'currentProject' é o 'p' correto para este card
+                    sendProjectToMicroservice(currentProject, btn); 
+                });
+            })(p); // Passa o 'p' atual para dentro da função
+        }
       }
     }
 
@@ -202,5 +351,5 @@
       });
     });
   </script>
-</body>
+  </body>
 </html>
