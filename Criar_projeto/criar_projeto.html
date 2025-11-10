@@ -6,10 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{--bg:#fafafa;--card:#fff;--text:#111;--muted:#666;--border:#e6e6e6;--primary:#4f46e5;--primary-contrast:#fff;--danger:#ef4444;--pill:#f4f4f5;--pill-border:#e4e4e7;--success-bg:#ecfdf5;--success-text:#065f46}
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);background:radial-gradient(1200px 800px at 50% -100px,#ffe6ff66,transparent),var(--bg)}
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--border)}
-    .brand{font-weight:700}
+    :root{--bg:#f9fafb;--card:#fff;--text:#111;--muted:#666;--border:#e6e6e6;--primary:#4f46e5;--primary-contrast:#fff;--danger:#ef4444;--pill:#f4f4f5;--pill-border:#e4e4e7;--success-bg:#ecfdf5;--success-text:#065f46}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);background:var(--bg)}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(90deg,#6366f1,#8b5cf6,#7c3aed);color:#fff;box-shadow:0 10px 25px -15px rgba(79,70,229,.8);border-bottom:1px solid rgba(255,255,255,.15)}
+    .brand{font-weight:700;color:#fff}
+    .topbar-actions{display:flex;align-items:center;gap:12px}
+    .topbar-btn{padding:12px 16px;border-radius:12px;border:1px solid transparent;background:rgba(255,255,255,.12);color:#fff;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s ease}
+    .topbar-btn:hover{background:rgba(255,255,255,.22)}
+    #whoami{color:#fff;font-size:14px;opacity:.9}
     .container{max-width:920px;margin:28px auto;padding:0 16px}
     .page-title{text-align:center;margin-bottom:18px}
     .page-title h1{margin:8px 0 4px;font-size:24px}.page-title p{margin:0;color:var(--muted)}
@@ -36,7 +40,10 @@
 <body>
   <header class="topbar">
     <div class="brand">TeamBuilder</div>
-    <div id="whoami" style="color:#555"></div>
+    <div class="topbar-actions">
+      <button type="button" id="backBtn" class="topbar-btn">← Voltar</button>
+      <div id="whoami"></div>
+    </div>
   </header>
 
   <main class="container">
@@ -235,6 +242,7 @@
     var form        = $("projectForm");
     var alertBox    = $("formAlert");
     var cancelBtn   = $("cancelBtn");
+    var backBtn     = $("backBtn");
 
     function showAlert(type, msg){
       alertBox.className = "alert " + type;
@@ -315,6 +323,13 @@
         if (document.referrer) history.back();
         else window.location.href = "../home/home.html";
       });
+
+      if (backBtn){
+        backBtn.addEventListener("click", function(){
+          if (history.length > 1) history.back();
+          else window.location.href = "../home/home.html";
+        });
+      }
 
       form.addEventListener("submit", function(e){
         e.preventDefault();

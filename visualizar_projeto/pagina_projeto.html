@@ -19,150 +19,76 @@
   </header>
 
   <main class="max-w-7xl mx-auto px-6 py-10">
-    <!-- Estado de carregamento -->
     <div id="loading" class="text-center py-16">
       <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-violet-700"></div>
-      <p class="mt-4 text-gray-600">Carregando seus projetos…</p>
+      <p class="mt-4 text-gray-600">Carregando projeto…</p>
     </div>
 
-    <!-- Estado de erro -->
     <div id="error" class="hidden bg-red-50 border border-red-200 rounded-xl p-6 text-center">
       <p class="text-red-700 text-lg font-semibold" id="errorMsg"></p>
     </div>
 
-    <!-- Conteúdo -->
-    <section id="content" class="hidden">
-      <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-900">Meus Projetos</h2>
-        <span id="count" class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-sm font-medium">0</span>
+    <section id="project-content" class="hidden space-y-8">
+      <h2 id="titulo-projeto" class="text-3xl font-bold text-gray-900"></h2>
+
+      <div class="bg-white border border-gray-200 rounded-3xl shadow-sm">
+        <div class="px-6 py-6 sm:px-10 sm:py-8 lg:px-12 lg:py-10 space-y-8">
+          <div class="space-y-3">
+            <h3 class="text-lg font-semibold text-violet-700 tracking-wide">
+              Descrição
+            </h3>
+            <p id="descricao-projeto" class="text-gray-600 leading-relaxed"></p>
+            <p id="categoria-projeto" class="text-gray-700"></p>
+            <div id="tags-projeto" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <h3 class="text-xl font-bold text-gray-900">Colaboradores</h3>
+              <p class="text-xs text-gray-500 mt-1">Adicionar membro ao projeto</p>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="relative w-full sm:flex-1 sm:min-w-[220px]">
+                <label class="sr-only" for="colaboradoresSearch">Buscar colaboradores</label>
+                <input
+                  id="colaboradoresSearch"
+                  type="text"
+                  placeholder="Ex: Por nome, React, Java, etc..."
+                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-600"
+                  autocomplete="off"
+                />
+                <div
+                  id="colaboradoresSuggestions"
+                  class="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-auto hidden z-20"
+                ></div>
+              </div>
+              <button
+                id="btnAdicionarColaborador"
+                type="button"
+                class="px-4 py-2.5 bg-violet-700 text-white text-sm font-medium rounded-lg shadow hover:bg-violet-800 transition"
+              >
+                Adicionar
+              </button>
+            </div>
+            <p class="text-xs text-gray-400">Buscar por nome ou habilidade</p>
+            <div id="empty-colab" class="hidden text-gray-500">
+              Nenhum colaborador inscrito.
+            </div>
+            <div id="colaboradores-lista" class="space-y-4"></div>
+          </div>
+        </div>
       </div>
 
-      <!-- Vazio -->
-      <div id="empty" class="hidden text-center py-16">
-        <svg class="mx-auto h-16 w-16 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M19 12c0 4.418-3.582 8-8 8-1.85 0-3.554-.63-4.9-1.69L3 20l1.69-3.1A7.953 7.953 0 014 12c0-4.418 3.582-8 8-8s8 3.582 8 8z"/>
-        </svg>
-        <p class="mt-4 text-gray-500">Você ainda não criou nenhum projeto.</p>
+      <div class="bg-white border border-gray-200 rounded-3xl shadow-sm px-6 py-6 sm:px-10 sm:py-8 lg:px-12 lg:py-10 space-y-4">
+        <h3 class="text-lg font-semibold text-violet-700 tracking-wide">Sugestões de Colaboradores</h3>
+        <button id="btnSugestoes" class="bg-violet-700 text-white px-4 py-2 rounded-lg hover:bg-violet-800 transition">
+        Gerar Sugestões
+      </button>
+        <div id="sugestoes-container" class="space-y-4"></div>
       </div>
-
-      <!-- Grade de cards -->
-      <div id="grid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
     </section>
   </main>
 
-  <script>
-    // ===== Config =====
-    const API_BASE  = "https://bdprojetos.azurewebsites.net"; // seu micro de projetos
-    // Se quiser usar o Bearer do login, mantenha-o; senão, apenas deixe o token vazio no localStorage.
-
-    // ===== Sessão (mesma convenção da sua outra página) =====
-    const AUTH_KEY = "auth.user"; // { email, token }
-    const authStore = {
-      get(){ try { return JSON.parse(localStorage.getItem(AUTH_KEY) || "null"); } catch { return null; } },
-      set(v){ localStorage.setItem(AUTH_KEY, JSON.stringify(v)); },
-      clear(){ localStorage.removeItem(AUTH_KEY); }
-    };
-    const getEmail = () => authStore.get()?.email || "";
-    const getToken = () => authStore.get()?.token || "";
-
-    // ===== Helper HTTP com headers necessários =====
-    async function http(path, init = {}) {
-      const headers = { "Content-Type": "application/json", ...(init.headers || {}) };
-      const email = getEmail();
-      const token = getToken();
-      if (email) headers["X-User-Email"] = email;              // <- obrigatório p/ mine=1
-      if (token) headers["Authorization"] = `Bearer ${token}`;  // <- opcional (seu back não valida ainda)
-
-      const res = await fetch(API_BASE + path, { ...init, headers });
-      if (!res.ok) {
-        let msg = res.status + " " + res.statusText;
-        try { const d = await res.json(); if (d?.detail) msg = d.detail; } catch {}
-        throw new Error(msg);
-      }
-      return res.json();
-    }
-
-    // ===== Renderização =====
-    const elLoading = document.getElementById("loading");
-    const elError   = document.getElementById("error");
-    const elErrorMsg= document.getElementById("errorMsg");
-    const elContent = document.getElementById("content");
-    const elGrid    = document.getElementById("grid");
-    const elEmpty   = document.getElementById("empty");
-    const elCount   = document.getElementById("count");
-    const elWhoami  = document.getElementById("whoami");
-
-    function show(el){ el.classList.remove("hidden"); }
-    function hide(el){ el.classList.add("hidden"); }
-
-    function card(project){
-      const tagCount = (project.tags || []).length;
-      const memberCount = (project.members || []).length;
-      const cat = project.category || "Sem categoria";
-      const id  = project.id;
-
-      const div = document.createElement("div");
-      div.className = "bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition cursor-pointer";
-      div.innerHTML = `
-        <div class="flex items-start justify-between mb-3">
-          <h3 class="text-lg font-semibold text-gray-900">${escapeHtml(project.title || "Sem título")}</h3>
-          <span class="text-xs bg-violet-100 text-violet-700 px-2 py-1 rounded-full">${tagCount} tag${tagCount!==1?'s':''}</span>
-        </div>
-        <p class="text-gray-600 text-sm line-clamp-3 mb-3">${escapeHtml(project.description || "Sem descrição")}</p>
-        <div class="flex items-center justify-between text-sm">
-          <span class="text-gray-500">Categoria: <span class="font-medium">${escapeHtml(cat)}</span></span>
-          <span class="text-gray-500">${memberCount} membro${memberCount!==1?'s':''}</span>
-        </div>
-      `;
-      div.onclick = () => {
-        // abra sua página de detalhes
-        window.location.href = `../visualizar_projeto/pagina_projeto.html?id=${id}`;
-      };
-      return div;
-    }
-
-    // evita XSS simples no HTML de cards
-    function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-
-    // ===== Carga principal =====
-    async function loadMyProjects(){
-      const email = getEmail();
-      elWhoami.textContent = email ? `Logado como: ${email}` : "Não logado";
-
-      if (!email){
-        hide(elLoading); hide(elContent);
-        elErrorMsg.textContent = "Você precisa estar logado para ver seus projetos.";
-        show(elError); return;
-      }
-
-      try{
-        const projects = await http("/projects?mine=1");
-        hide(elLoading); show(elContent);
-
-        elGrid.innerHTML = "";
-        elCount.textContent = projects.length;
-
-        if (projects.length === 0){
-          show(elEmpty);
-          return;
-        }
-        hide(elEmpty);
-
-        projects.forEach(p => elGrid.appendChild(card(p)));
-      }catch(err){
-        hide(elLoading);
-        elErrorMsg.textContent = "Erro ao buscar projetos: " + (err.message || "desconhecido");
-        show(elError);
-      }
-    }
-
-    // init
-    loadMyProjects();
-  </script>
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>

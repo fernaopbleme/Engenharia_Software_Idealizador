@@ -17,7 +17,7 @@
                     // Opcional: salvar o token para uso futuro
                     localStorage.setItem("access_token", data.access_token);
                     // Redirecionar para a página principal
-                    window.location.href = "../exemplo_pagina_home.html";
+                    window.location.href = "../home/home.html";
                 } else {
                     const erro = await resposta.json();
                     mensagem.textContent = "❌ Erro: " + erro.detail;
