@@ -107,7 +107,8 @@ export async function enviarProjetoParaIa(projeto, colaboradores) {
   return data?.sugestoes || [];
 }
 
-const API_COLABORADORES = "http://localhost:8002/colaboradores";
+const API_COLABORADORES =
+  "https://colaboradoresidealizador.azurewebsites.net/colaboradores";
 
 export async function adicionarColaboradorAoProjeto(colaboradorId, projetoId) {
   if (!colaboradorId || !projetoId) {

@@ -1,7 +1,8 @@
 import { getSession } from "./session.js";
 
 export const API_BASE = "https://bdprojetos.azurewebsites.net";
-export const API_COLABORADORES_BASE = "http://localhost:8002/colaboradores";
+export const API_COLABORADORES_BASE =
+  "https://colaboradoresidealizador.azurewebsites.net/colaboradores";
 
 export function buildAuthHeaders(extra = {}) {
   const headers = { "Content-Type": "application/json", ...extra };
@@ -66,7 +67,7 @@ export function getProjectMembers(projectId) {
 }
 
 export async function getColaboradoresLista() {
-  const response = await fetch("http://localhost:8002/colaboradores");
+  const response = await fetch(API_COLABORADORES_BASE);
   if (!response.ok) {
     throw new Error(`Erro ao buscar colaboradores: ${response.status}`);
   }
